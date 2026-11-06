@@ -84,20 +84,7 @@ void main() {
           );
         }
         if (request.url.path.endsWith('/Users/user-456/Items/Resume')) {
-          return http.Response(
-            jsonEncode({
-              'Items': [
-                {
-                  'Id': 'resume-1',
-                  'Name': 'Continue watching',
-                  'Type': 'Movie',
-                  'RunTimeTicks': 1000,
-                  'UserData': {'PlaybackPositionTicks': 300},
-                },
-              ],
-            }),
-            200,
-          );
+          return http.Response(jsonEncode({'Items': <Object>[]}), 200);
         }
         if (request.url.path.endsWith('/Users/user-456/Items/Latest')) {
           return http.Response(
@@ -157,6 +144,7 @@ void main() {
     );
     await tester.pump();
     expect(find.text('继续观看'), findsOneWidget);
+    expect(find.text('暂无内容'), findsOneWidget);
     final libraryRail = find.byKey(const ValueKey('library-library-1'));
     final libraryTitle = tester.widget<Text>(
       find.descendant(of: libraryRail, matching: find.text('Movies')),

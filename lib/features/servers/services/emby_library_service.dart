@@ -44,17 +44,10 @@ class EmbyLibraryService {
           ),
         ),
       ),
-      _getItems(
+      _loadRecentlyPlayedItems(
         serverAddress: serverAddress,
         accessToken: accessToken,
-        path: 'Users/$userId/Items/Resume',
-        queryParameters: const {
-          'Limit': '20',
-          'EnableImages': 'true',
-          'EnableUserData': 'true',
-          'EnableImageTypes': 'Primary,Thumb,Backdrop',
-        },
-        queryResult: true,
+        userId: userId,
       ),
       _loadLatestItems(
         serverAddress: serverAddress,
@@ -68,6 +61,66 @@ class EmbyLibraryService {
       recentlyPlayed: parts[1] as List<EmbyLibraryItem>,
       featured: parts[2] as List<EmbyLibraryItem>,
     );
+  }
+
+  Future<List<EmbyLibraryItem>> _loadRecentlyPlayedItems({
+    required String serverAddress,
+    required String accessToken,
+    required String userId,
+  }) async {
+    const imageParameters = {
+      'Limit': '20',
+      'EnableImages': 'true',
+      'EnableUserData': 'true',
+      'EnableImageTypes': 'Primary,Thumb,Backdrop',
+    };
+    List<EmbyLibraryItem> resumeItems = const [];
+    List<EmbyLibraryItem> resumableItems = const [];
+    EmbyLibraryRequestException? resumeError;
+    EmbyLibraryRequestException? resumableError;
+
+    try {
+      resumeItems = await _getItems(
+        serverAddress: serverAddress,
+        accessToken: accessToken,
+        path: 'Users/$userId/Items/Resume',
+        queryParameters: imageParameters,
+        queryResult: true,
+      );
+    } on EmbyLibraryRequestException catch (error) {
+      resumeError = error;
+    }
+
+    // Resume is Emby's dedicated Continue Watching feed (including next-up
+    // episodes). IsResumable also returns each individual item with a saved
+    // playback position, which some clients expect in this row.
+    try {
+      resumableItems = await _getItems(
+        serverAddress: serverAddress,
+        accessToken: accessToken,
+        path: 'Users/$userId/Items',
+        queryParameters: {
+          ...imageParameters,
+          'Filters': 'IsResumable',
+          'Recursive': 'true',
+          'SortBy': 'DatePlayed',
+          'SortOrder': 'Descending',
+        },
+        queryResult: true,
+      );
+    } on EmbyLibraryRequestException catch (error) {
+      resumableError = error;
+    }
+
+    if (resumeError != null && resumableError != null) {
+      throw resumeError;
+    }
+
+    final uniqueItems = <String, EmbyLibraryItem>{};
+    for (final item in [...resumeItems, ...resumableItems]) {
+      uniqueItems.putIfAbsent(item.id, () => item);
+    }
+    return uniqueItems.values.take(20).toList(growable: false);
   }
 
   Future<List<EmbyLibrary>> _loadLibraries({

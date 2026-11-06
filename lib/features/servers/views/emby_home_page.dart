@@ -216,7 +216,7 @@ class _EmbyHomePageState extends State<EmbyHomePage> {
                   backgroundColor: Colors.white12,
                 ),
               ),
-            if (content != null && content.recentlyPlayed.isNotEmpty)
+            if (content != null)
               SliverToBoxAdapter(
                 child: ContinueWatchingSection(
                   items: content.recentlyPlayed,
@@ -231,13 +231,6 @@ class _EmbyHomePageState extends State<EmbyHomePage> {
                   server: widget.server,
                   service: _libraryService,
                 ),
-              ),
-            if (content != null &&
-                content.featured.isEmpty &&
-                content.recentlyPlayed.isEmpty &&
-                content.libraries.isEmpty)
-              SliverFillRemaining(
-                child: Center(child: Text(context.l10n.homeNoItems)),
               ),
           ],
           const SliverToBoxAdapter(child: SizedBox(height: 40)),
