@@ -182,6 +182,7 @@ class _WbsPlayerAppState extends State<WbsPlayerApp> {
           _resolveSupportedLocaleList(locales),
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
+        brightness: Brightness.light,
         useMaterial3: true,
         scaffoldBackgroundColor: AppColors.pageBackground,
         colorScheme: ColorScheme.fromSeed(

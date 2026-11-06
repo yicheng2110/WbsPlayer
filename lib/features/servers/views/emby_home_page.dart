@@ -135,124 +135,113 @@ class _EmbyHomePageState extends State<EmbyHomePage> {
     final content = _content;
     return Scaffold(
       backgroundColor: AppColors.mediaBackground,
-      body: Theme(
-        data: Theme.of(context).copyWith(
-          brightness: Brightness.dark,
-          scaffoldBackgroundColor: AppColors.mediaBackground,
-          colorScheme: Theme.of(context).colorScheme.copyWith(
-            brightness: Brightness.dark,
-            surface: AppColors.mediaBackground,
-            onSurface: Colors.white,
-          ),
-        ),
-        child: CustomScrollView(
-          key: const Key('emby-home-scroll'),
-          slivers: [
-            SliverAppBar(
-              pinned: true,
-              floating: true,
-              backgroundColor: AppColors.mediaBackground,
-              surfaceTintColor: Colors.transparent,
-              foregroundColor: Colors.white,
-              title: Text(widget.server.name),
-              leading: IconButton(
-                tooltip: MaterialLocalizations.of(context).backButtonTooltip,
-                onPressed: () => context.pop(),
-                icon: const Icon(Icons.arrow_back),
-              ),
-              actions: [
-                IconButton(
-                  key: const Key('emby-home-refresh'),
-                  tooltip: context.l10n.homeRetry,
-                  onPressed: _load,
-                  icon: const Icon(Icons.refresh),
-                ),
-              ],
+      body: CustomScrollView(
+        key: const Key('emby-home-scroll'),
+        slivers: [
+          SliverAppBar(
+            pinned: true,
+            floating: true,
+            backgroundColor: AppColors.mediaBackground,
+            surfaceTintColor: Colors.transparent,
+            foregroundColor: AppColors.mediaInk,
+            title: Text(widget.server.name),
+            leading: IconButton(
+              tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+              onPressed: () => context.pop(),
+              icon: const Icon(Icons.arrow_back),
             ),
-            if (_isLoading && content == null)
-              SliverFillRemaining(
-                child: Center(
+            actions: [
+              IconButton(
+                key: const Key('emby-home-refresh'),
+                tooltip: context.l10n.homeRetry,
+                onPressed: _load,
+                icon: const Icon(Icons.refresh),
+              ),
+            ],
+          ),
+          if (_isLoading && content == null)
+            SliverFillRemaining(
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const CircularProgressIndicator(
+                      color: AppColors.mediaAccent,
+                    ),
+                    const SizedBox(height: 18),
+                    Text(context.l10n.homeLoading),
+                  ],
+                ),
+              ),
+            )
+          else if (_error != null && content == null)
+            SliverFillRemaining(
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(28),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const CircularProgressIndicator(
-                        color: AppColors.mediaAccent,
+                      const Icon(Icons.cloud_off_outlined, size: 42),
+                      const SizedBox(height: 14),
+                      Text(
+                        context.l10n.homeLoadFailed,
+                        textAlign: TextAlign.center,
                       ),
-                      const SizedBox(height: 18),
-                      Text(context.l10n.homeLoading),
+                      const SizedBox(height: 16),
+                      FilledButton.icon(
+                        onPressed: _load,
+                        icon: const Icon(Icons.refresh),
+                        label: Text(context.l10n.homeRetry),
+                      ),
                     ],
                   ),
                 ),
-              )
-            else if (_error != null && content == null)
+              ),
+            )
+          else ...[
+            if (content != null && content.featured.isNotEmpty)
+              SliverToBoxAdapter(
+                child: FeaturedCarousel(
+                  items: content.featured,
+                  server: widget.server,
+                  service: _libraryService,
+                ),
+              ),
+            if (_isLoading)
+              SliverToBoxAdapter(
+                child: LinearProgressIndicator(
+                  minHeight: 2,
+                  color: AppColors.mediaAccent,
+                  backgroundColor: Colors.white12,
+                ),
+              ),
+            if (content != null && content.recentlyPlayed.isNotEmpty)
+              SliverToBoxAdapter(
+                child: ContinueWatchingSection(
+                  items: content.recentlyPlayed,
+                  server: widget.server,
+                  service: _libraryService,
+                ),
+              ),
+            if (content != null && content.libraries.isNotEmpty)
+              SliverToBoxAdapter(
+                child: LibraryListSection(
+                  sections: content.libraries,
+                  server: widget.server,
+                  service: _libraryService,
+                ),
+              ),
+            if (content != null &&
+                content.featured.isEmpty &&
+                content.recentlyPlayed.isEmpty &&
+                content.libraries.isEmpty)
               SliverFillRemaining(
-                child: Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(28),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.cloud_off_outlined, size: 42),
-                        const SizedBox(height: 14),
-                        Text(
-                          context.l10n.homeLoadFailed,
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 16),
-                        FilledButton.icon(
-                          onPressed: _load,
-                          icon: const Icon(Icons.refresh),
-                          label: Text(context.l10n.homeRetry),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              )
-            else ...[
-              if (content != null && content.featured.isNotEmpty)
-                SliverToBoxAdapter(
-                  child: FeaturedCarousel(
-                    items: content.featured,
-                    server: widget.server,
-                    service: _libraryService,
-                  ),
-                ),
-              if (_isLoading)
-                SliverToBoxAdapter(
-                  child: LinearProgressIndicator(
-                    minHeight: 2,
-                    color: AppColors.mediaAccent,
-                    backgroundColor: Colors.white12,
-                  ),
-                ),
-              if (content != null && content.recentlyPlayed.isNotEmpty)
-                SliverToBoxAdapter(
-                  child: ContinueWatchingSection(
-                    items: content.recentlyPlayed,
-                    server: widget.server,
-                    service: _libraryService,
-                  ),
-                ),
-              if (content != null && content.libraries.isNotEmpty)
-                SliverToBoxAdapter(
-                  child: LibraryListSection(
-                    sections: content.libraries,
-                    server: widget.server,
-                    service: _libraryService,
-                  ),
-                ),
-              if (content != null &&
-                  content.featured.isEmpty &&
-                  content.recentlyPlayed.isEmpty &&
-                  content.libraries.isEmpty)
-                SliverFillRemaining(
-                  child: Center(child: Text(context.l10n.homeNoItems)),
-                ),
-            ],
-            const SliverToBoxAdapter(child: SizedBox(height: 40)),
+                child: Center(child: Text(context.l10n.homeNoItems)),
+              ),
           ],
-        ),
+          const SliverToBoxAdapter(child: SizedBox(height: 40)),
+        ],
       ),
     );
   }

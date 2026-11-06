@@ -72,7 +72,7 @@ class _FeaturedCarouselState extends State<FeaturedCarousel> {
                           Color(0x66000000),
                           Color(0x00000000),
                           Color(0xC9000000),
-                          Color(0xFF101211),
+                          Color(0xE6101211),
                         ],
                         stops: [0, 0.25, 0.72, 1],
                       ),
@@ -218,7 +218,11 @@ class LibraryListSection extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(20, 26, 20, 8),
         child: Text(
           context.l10n.homeLibraries,
-          style: const TextStyle(fontSize: 23, fontWeight: FontWeight.w700),
+          style: const TextStyle(
+            color: AppColors.mediaInk,
+            fontSize: 23,
+            fontWeight: FontWeight.w700,
+          ),
         ),
       ),
       for (final section in sections)
@@ -269,15 +273,13 @@ class _MediaRail extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
+                    color: AppColors.mediaInk,
                     fontSize: 21,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
               ),
-              Icon(
-                Icons.chevron_right,
-                color: Colors.white.withValues(alpha: 0.65),
-              ),
+              const Icon(Icons.chevron_right, color: AppColors.mediaMuted),
             ],
           ),
         ),
@@ -286,7 +288,7 @@ class _MediaRail extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(20, 2, 20, 14),
             child: Text(
               context.l10n.homeNoItems,
-              style: const TextStyle(color: Colors.white60, fontSize: 13),
+              style: const TextStyle(color: AppColors.mediaMuted, fontSize: 13),
             ),
           )
         else
@@ -341,6 +343,7 @@ class _MediaRail extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
+                          color: AppColors.mediaInk,
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
                         ),
@@ -351,7 +354,7 @@ class _MediaRail extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
-                            color: Colors.white60,
+                            color: AppColors.mediaMuted,
                             fontSize: 12,
                           ),
                         )
@@ -359,7 +362,7 @@ class _MediaRail extends StatelessWidget {
                         Text(
                           '${item.productionYear}',
                           style: const TextStyle(
-                            color: Colors.white60,
+                            color: AppColors.mediaMuted,
                             fontSize: 12,
                           ),
                         ),
@@ -431,11 +434,7 @@ class _PosterPlaceholder extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     color: AppColors.mediaSurface,
     alignment: Alignment.center,
-    child: Icon(
-      Icons.movie_outlined,
-      color: Colors.white.withValues(alpha: 0.3),
-      size: 34,
-    ),
+    child: Icon(Icons.movie_outlined, color: AppColors.mediaMuted, size: 34),
   );
 }
 

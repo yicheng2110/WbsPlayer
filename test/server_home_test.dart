@@ -12,6 +12,7 @@ import 'package:wbs_player/features/servers/repositories/drift_server_repository
 import 'package:wbs_player/features/servers/repositories/server_repository.dart';
 import 'package:wbs_player/features/servers/services/emby_library_service.dart';
 import 'package:wbs_player/features/servers/services/emby_server_service.dart';
+import 'package:wbs_player/ui/core/app_colors.dart';
 
 void main() {
   testWidgets('shows the empty server state and primary navigation', (
@@ -130,7 +131,10 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(tester.takeException(), isNull);
-    expect(mediaRequests.map((request) => request.url.path).toList(), isNotEmpty);
+    expect(
+      mediaRequests.map((request) => request.url.path).toList(),
+      isNotEmpty,
+    );
     expect(
       mediaRequests.map((request) => request.url.path).toList(),
       contains('/emby/Users/user-456/Views'),
@@ -139,6 +143,13 @@ void main() {
     expect(find.text('暂无内容'), findsNothing);
     expect(find.text('Home Emby'), findsWidgets);
     expect(find.byKey(const Key('featured-carousel')), findsOneWidget);
+    expect(
+      Theme.of(tester.element(find.byKey(const Key('emby-home-scroll'))))
+          .brightness,
+      Brightness.light,
+    );
+    final homeScaffold = tester.widget<Scaffold>(find.byType(Scaffold).last);
+    expect(homeScaffold.backgroundColor, AppColors.mediaBackground);
     expect(find.text('Latest movie'), findsWidgets);
     await tester.drag(
       find.byKey(const Key('emby-home-scroll')),
@@ -146,6 +157,15 @@ void main() {
     );
     await tester.pump();
     expect(find.text('继续观看'), findsOneWidget);
+    final libraryRail = find.byKey(const ValueKey('library-library-1'));
+    final libraryTitle = tester.widget<Text>(
+      find.descendant(of: libraryRail, matching: find.text('Movies')),
+    );
+    expect(libraryTitle.style?.color, AppColors.mediaInk);
+    final mediaTitle = tester.widget<Text>(
+      find.descendant(of: libraryRail, matching: find.text('Latest movie')),
+    );
+    expect(mediaTitle.style?.color, AppColors.mediaInk);
     expect(find.text('Movies'), findsWidgets);
     expect(tester.takeException(), isNull);
   });
