@@ -88,7 +88,7 @@ class ReleaseUpdateService {
        _ownsClient = client == null,
        _currentVersionProvider = currentVersionProvider ?? _readCurrentVersion,
        _temporaryDirectoryProvider =
-           temporaryDirectoryProvider ?? getTemporaryDirectory;
+           temporaryDirectoryProvider ?? _getDownloadDirectory;
 
   static const _latestReleaseUri =
       'https://api.github.com/repos/yicheng2110/WbsPlayer/releases/latest';
@@ -145,7 +145,9 @@ class ReleaseUpdateService {
     }
 
     final directory = await _temporaryDirectoryProvider();
-    final file = File(p.join(directory.path, 'wbs-player-update.apk'));
+    await directory.create(recursive: true);
+    final version = Version.parse(release.latestVersion).canonicalizedVersion;
+    final file = File(p.join(directory.path, 'wbs-player-update-$version.apk'));
     final totalBytes = response.contentLength;
     final sink = file.openWrite();
     var receivedBytes = 0;
@@ -175,6 +177,20 @@ class ReleaseUpdateService {
 
   void close() {
     if (_ownsClient) _client.close();
+  }
+
+  static Future<Directory> _getDownloadDirectory() async {
+    if (Platform.isAndroid) {
+      try {
+        final directories = await getExternalCacheDirectories();
+        if (directories case [final directory, ...]) return directory;
+      } on UnsupportedError {
+        // Fall back to the internal cache if external cache is unavailable.
+      } on MissingPlatformDirectoryException {
+        // Fall back to the internal cache if external cache is unavailable.
+      }
+    }
+    return getTemporaryDirectory();
   }
 
   static Future<String> _readCurrentVersion() async =>

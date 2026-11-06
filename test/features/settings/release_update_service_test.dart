@@ -101,9 +101,22 @@ void main() {
         },
       );
 
+      expect(file.path, endsWith('wbs-player-update-1.1.0.apk'));
       expect(await file.readAsBytes(), [1, 2, 3, 4]);
       expect(progressEvents, isNotEmpty);
       expect(progressEvents.last.$1, 4);
+
+      final secondRelease = ReleaseUpdate(
+        currentVersion: '1.1.0',
+        latestVersion: '1.2.0',
+        apkUri: Uri.https('example.com', '/app-release.apk'),
+      );
+      final secondFile = await service.downloadApk(
+        secondRelease,
+        onProgress: (_, _) {},
+      );
+      expect(secondFile.path, isNot(file.path));
+      expect(await file.exists(), isTrue);
     });
   });
 }
