@@ -86,100 +86,105 @@ void main() {
       ),
       isTrue,
     );
-    expect(
-      requests.any((request) => request.url.path.endsWith('/Items/Resume')),
-      isTrue,
+    final resumeRequest = requests.singleWhere(
+      (request) => request.url.path.endsWith('/Users/user-1/Items/Resume'),
     );
     expect(
-      requests.any(
+      resumeRequest.url.queryParameters['Fields'],
+      'ProductionYear,Overview',
+    );
+    expect(resumeRequest.url.queryParameters['MediaTypes'], 'Video');
+    expect(resumeRequest.url.queryParameters['EnableUserData'], 'true');
+    expect(resumeRequest.headers['x-emby-token'], 'access-token');
+    expect(
+      requests.where(
+        (request) => request.url.path.endsWith('/Users/user-1/Items/Resume'),
+      ),
+      hasLength(1),
+    );
+    expect(
+      requests.where(
         (request) =>
             request.url.path.endsWith('/Users/user-1/Items') &&
             request.url.queryParameters['Filters'] == 'IsResumable',
       ),
-      isTrue,
+      isEmpty,
     );
   });
 
-  test(
-    'merges Emby Resume and IsResumable results without duplicates',
-    () async {
-      final requests = <http.Request>[];
-      final service = EmbyLibraryService(
-        client: MockClient((request) async {
-          requests.add(request);
-          if (request.url.path.endsWith('/Users/user-1/Views')) {
-            return http.Response(jsonEncode({'Items': <Object>[]}), 200);
-          }
-          if (request.url.path.endsWith('/Users/user-1/Items/Resume')) {
-            return http.Response(
-              jsonEncode({
-                'Items': [
-                  {
-                    'Id': 'resume-1',
-                    'Name': 'Next episode',
-                    'Type': 'Episode',
-                    'RunTimeTicks': 1000,
-                    'UserData': {'PlaybackPositionTicks': 200},
-                  },
-                ],
-              }),
-              200,
-            );
-          }
-          if (request.url.path.endsWith('/Users/user-1/Items') &&
-              request.url.queryParameters['Filters'] == 'IsResumable') {
-            return http.Response(
-              jsonEncode({
-                'Items': [
-                  {
-                    'Id': 'resume-1',
-                    'Name': 'Next episode',
-                    'Type': 'Episode',
-                    'RunTimeTicks': 1000,
-                    'UserData': {'PlaybackPositionTicks': 200},
-                  },
-                  {
-                    'Id': 'resume-2',
-                    'Name': 'Paused movie',
-                    'Type': 'Movie',
-                    'RunTimeTicks': 2000,
-                    'UserData': {'PlaybackPositionTicks': 900},
-                  },
-                ],
-              }),
-              200,
-            );
-          }
-          if (request.url.path.endsWith('/Users/user-1/Items/Latest')) {
-            return http.Response('[]', 200);
-          }
-          return http.Response('', 404);
-        }),
-      );
-      addTearDown(service.close);
+  test('loads continue-watching videos from Emby Resume endpoint', () async {
+    final requests = <http.Request>[];
+    final service = EmbyLibraryService(
+      client: MockClient((request) async {
+        requests.add(request);
+        if (request.url.path.endsWith('/Users/user-1/Views')) {
+          return http.Response(jsonEncode({'Items': <Object>[]}), 200);
+        }
+        if (request.url.path.endsWith('/Users/user-1/Items/Resume')) {
+          return http.Response(
+            jsonEncode({
+              'Items': [
+                {
+                  'Id': 'resume-1',
+                  'Name': 'Next episode',
+                  'Type': 'Episode',
+                  'RunTimeTicks': 1000,
+                  'UserData': {'PlaybackPositionTicks': 200},
+                },
+                {
+                  'Id': 'resume-2',
+                  'Name': 'Paused movie',
+                  'Type': 'Movie',
+                  'RunTimeTicks': 2000,
+                  'UserData': {'PlaybackPositionTicks': 900},
+                },
+              ],
+            }),
+            200,
+          );
+        }
+        if (request.url.path.endsWith('/Users/user-1/Items/Latest')) {
+          return http.Response('[]', 200);
+        }
+        return http.Response('', 404);
+      }),
+    );
+    addTearDown(service.close);
 
-      final home = await service.loadHome(
-        serverAddress: 'http://emby.example:8096',
-        accessToken: 'access-token',
-        userId: 'user-1',
-      );
+    final home = await service.loadHome(
+      serverAddress: 'http://emby.example:8096',
+      accessToken: 'access-token',
+      userId: 'user-1',
+    );
 
-      expect(home.recentlyPlayed.map((item) => item.id), [
-        'resume-1',
-        'resume-2',
-      ]);
-      expect(home.recentlyPlayed.last.name, 'Paused movie');
-      expect(home.recentlyPlayed.last.playbackPositionTicks, 900);
-      final resumableRequest = requests.singleWhere(
+    expect(home.recentlyPlayed.map((item) => item.id), [
+      'resume-1',
+      'resume-2',
+    ]);
+    expect(home.recentlyPlayed.last.name, 'Paused movie');
+    expect(home.recentlyPlayed.last.playbackPositionTicks, 900);
+    final resumeRequests = requests
+        .where(
+          (request) => request.url.path.endsWith('/Users/user-1/Items/Resume'),
+        )
+        .toList();
+    expect(resumeRequests, hasLength(1));
+    expect(resumeRequests.single.url.queryParameters['MediaTypes'], 'Video');
+    expect(
+      resumeRequests.single.url.queryParameters['Fields'],
+      'ProductionYear,Overview',
+    );
+    expect(resumeRequests.single.url.queryParameters['EnableUserData'], 'true');
+    expect(resumeRequests.single.headers['x-emby-token'], 'access-token');
+    expect(
+      requests.where(
         (request) =>
             request.url.path.endsWith('/Users/user-1/Items') &&
             request.url.queryParameters['Filters'] == 'IsResumable',
-      );
-      expect(resumableRequest.url.queryParameters['Recursive'], 'true');
-      expect(resumableRequest.url.queryParameters['EnableUserData'], 'true');
-      expect(resumableRequest.headers['x-emby-token'], 'access-token');
-    },
-  );
+      ),
+      isEmpty,
+    );
+  });
 
   test('uses Emby item image URL and includes a supplied image cache tag', () {
     final service = EmbyLibraryService(
