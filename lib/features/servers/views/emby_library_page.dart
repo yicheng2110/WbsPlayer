@@ -72,7 +72,7 @@ class _EmbyLibraryPageState extends State<EmbyLibraryPage> {
     if (_scrollController.position.extentAfter < 600) _loadNextPage();
   }
 
-  Future<void> _loadFirstPage() async {
+  Future<void> _loadFirstPage({bool forceRefresh = false}) async {
     final requestId = ++_requestId;
     setState(() {
       _isLoading = true;
@@ -83,8 +83,8 @@ class _EmbyLibraryPageState extends State<EmbyLibraryPage> {
     });
     try {
       final page = _sortBy == EmbyLibrarySort.random
-          ? await _loadRandomItems(requestId)
-          : await _requestPage(startIndex: 0);
+          ? await _loadRandomItems(requestId, forceRefresh: forceRefresh)
+          : await _requestPage(startIndex: 0, forceRefresh: forceRefresh);
       if (!mounted || requestId != _requestId) return;
       setState(() {
         _items.addAll(page.items);
@@ -100,11 +100,17 @@ class _EmbyLibraryPageState extends State<EmbyLibraryPage> {
     }
   }
 
-  Future<EmbyLibraryItemPage> _loadRandomItems(int requestId) async {
+  Future<EmbyLibraryItemPage> _loadRandomItems(
+    int requestId, {
+    bool forceRefresh = false,
+  }) async {
     final items = <EmbyLibraryItem>[];
     var totalRecordCount = 0;
     while (items.length < totalRecordCount || items.isEmpty) {
-      final page = await _requestPage(startIndex: items.length);
+      final page = await _requestPage(
+        startIndex: items.length,
+        forceRefresh: forceRefresh,
+      );
       if (!mounted || requestId != _requestId) {
         return EmbyLibraryItemPage(items: const [], totalRecordCount: 0);
       }
@@ -153,7 +159,10 @@ class _EmbyLibraryPageState extends State<EmbyLibraryPage> {
     _loadNextPage();
   }
 
-  Future<EmbyLibraryItemPage> _requestPage({required int startIndex}) async {
+  Future<EmbyLibraryItemPage> _requestPage({
+    required int startIndex,
+    bool forceRefresh = false,
+  }) async {
     var userId = _userId;
     if (userId == null || userId.isEmpty) {
       await _reauthenticate();
@@ -171,6 +180,7 @@ class _EmbyLibraryPageState extends State<EmbyLibraryPage> {
         ascending: _sortBy == EmbyLibrarySort.random ? true : _ascending,
         startIndex: startIndex,
         limit: _pageSize,
+        forceRefresh: forceRefresh,
       );
     } on EmbyLibraryRequestException catch (error) {
       if (error.statusCode != 401) rethrow;
@@ -186,6 +196,7 @@ class _EmbyLibraryPageState extends State<EmbyLibraryPage> {
         ascending: _sortBy == EmbyLibrarySort.random ? true : _ascending,
         startIndex: startIndex,
         limit: _pageSize,
+        forceRefresh: forceRefresh,
       );
     }
   }
@@ -325,7 +336,7 @@ class _EmbyLibraryPageState extends State<EmbyLibraryPage> {
     if (_items.isEmpty) return Center(child: Text(context.l10n.homeNoItems));
 
     return RefreshIndicator(
-      onRefresh: _loadFirstPage,
+      onRefresh: () => _loadFirstPage(forceRefresh: true),
       color: AppColors.mediaAccent,
       child: Center(
         child: ConstrainedBox(

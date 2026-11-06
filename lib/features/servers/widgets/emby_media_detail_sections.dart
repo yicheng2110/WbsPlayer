@@ -207,6 +207,23 @@ class EmbyMediaDetailHero extends StatelessWidget {
               _FactChip(
                 '${premiereDate.year}-${premiereDate.month.toString().padLeft(2, '0')}-${premiereDate.day.toString().padLeft(2, '0')}',
               ),
+            if (detail.seriesName != null) _FactChip(detail.seriesName!),
+            if (detail.seasonName != null)
+              _FactChip(detail.seasonName!)
+            else if (detail.seasonNumber != null)
+              _FactChip(
+                embyMediaDetailText(
+                  text,
+                  'mediaDetailSeasonNumber',
+                ).replaceAll('{number}', '${detail.seasonNumber}'),
+              ),
+            if (detail.episodeNumber != null)
+              _FactChip(
+                embyMediaDetailText(
+                  text,
+                  'mediaDetailEpisodeNumber',
+                ).replaceAll('{number}', '${detail.episodeNumber}'),
+              ),
             if (detail.productionYear != null)
               _FactChip('${detail.productionYear}'),
             if (detail.officialRating != null)
@@ -342,6 +359,19 @@ class EmbyMediaDetailHero extends StatelessWidget {
   }
 
   List<String> _facts(BuildContext context) => [
+    if (detail.seriesName != null) detail.seriesName!,
+    if (detail.seasonName != null)
+      detail.seasonName!
+    else if (detail.seasonNumber != null)
+      embyMediaDetailText(
+        text,
+        'mediaDetailSeasonNumber',
+      ).replaceAll('{number}', '${detail.seasonNumber}'),
+    if (detail.episodeNumber != null)
+      embyMediaDetailText(
+        text,
+        'mediaDetailEpisodeNumber',
+      ).replaceAll('{number}', '${detail.episodeNumber}'),
     if (detail.productionYear != null) '${detail.productionYear}',
     if (detail.type.isNotEmpty) detail.type,
     if (detail.officialRating != null) detail.officialRating!,
@@ -404,6 +434,7 @@ class EmbyMediaDetailSections extends StatelessWidget {
     super.key,
     required this.detail,
     required this.similar,
+    required this.seasons,
     required this.mediaSources,
     required this.images,
     required this.server,
@@ -415,6 +446,7 @@ class EmbyMediaDetailSections extends StatelessWidget {
 
   final EmbyMediaDetail detail;
   final List<EmbySimilarItem> similar;
+  final List<EmbyMediaSeason> seasons;
   final List<EmbyMediaSource> mediaSources;
   final List<EmbyMediaDetailImage> images;
   final EmbyServer server;
@@ -447,6 +479,18 @@ class EmbyMediaDetailSections extends StatelessWidget {
               else
                 _empty(context, 'mediaDetailNoPeople'),
               if (crew.isNotEmpty) _CrewLine(people: crew, text: text),
+              if (detail.type.toLowerCase() == 'series') ...[
+                _sectionTitle(context, 'mediaDetailSeasons'),
+                if (seasons.isEmpty)
+                  _empty(context, 'mediaDetailNoSeasons')
+                else
+                  _SeasonRail(
+                    seasons: seasons,
+                    server: server,
+                    libraryService: libraryService,
+                    text: text,
+                  ),
+              ],
               _sectionTitle(context, 'mediaDetailPhotos'),
               _ImageRail(
                 images: images,
@@ -534,6 +578,99 @@ class EmbyMediaDetailSections extends StatelessWidget {
       style: const TextStyle(color: AppColors.mediaMuted, fontSize: 13),
     ),
   );
+}
+
+class _SeasonRail extends StatelessWidget {
+  const _SeasonRail({
+    required this.seasons,
+    required this.server,
+    required this.libraryService,
+    this.text,
+  });
+
+  final List<EmbyMediaSeason> seasons;
+  final EmbyServer server;
+  final EmbyLibraryService libraryService;
+  final EmbyMediaDetailText? text;
+
+  @override
+  Widget build(BuildContext context) {
+    final cardWidth = (MediaQuery.sizeOf(context).width / 3).clamp(
+      150.0,
+      210.0,
+    );
+    return SizedBox(
+      height: cardWidth * 1.55 + 46,
+      child: ListView.separated(
+        padding: const EdgeInsets.symmetric(horizontal: 22),
+        scrollDirection: Axis.horizontal,
+        itemCount: seasons.length,
+        separatorBuilder: (_, _) => const SizedBox(width: 13),
+        itemBuilder: (context, index) {
+          final season = seasons[index];
+          final imageUri = libraryService.imageUri(
+            serverAddress: server.address,
+            itemId: season.id,
+            imageTag: season.primaryImageTag,
+            maxWidth: 500,
+          );
+          final seasonTitle = season.indexNumber == null
+              ? season.name
+              : embyMediaDetailText(
+                  text,
+                  'mediaDetailSeasonNumber',
+                ).replaceAll('{number}', '${season.indexNumber}');
+          final count = season.episodeCount;
+          return SizedBox(
+            width: cardWidth,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(11),
+                    child: SizedBox.expand(
+                      child: season.primaryImageTag == null
+                          ? const _ImageFallback()
+                          : Image.network(
+                              imageUri.toString(),
+                              headers: {'X-Emby-Token': server.accessToken},
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, _, _) => const _ImageFallback(),
+                            ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  seasonTitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: AppColors.mediaInk,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                if (count != null)
+                  Text(
+                    embyMediaDetailText(
+                      text,
+                      'mediaDetailEpisodeCount',
+                    ).replaceAll('{count}', '$count'),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: AppColors.mediaMuted,
+                      fontSize: 12,
+                    ),
+                  ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
 }
 
 class _ActorsRail extends StatelessWidget {

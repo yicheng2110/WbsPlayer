@@ -548,6 +548,36 @@ abstract class AppLocalizations {
   /// **'暂无类似内容'**
   String get mediaDetailNoSimilar;
 
+  /// No description provided for @mediaDetailSeasons.
+  ///
+  /// In zh, this message translates to:
+  /// **'剧集'**
+  String get mediaDetailSeasons;
+
+  /// No description provided for @mediaDetailNoSeasons.
+  ///
+  /// In zh, this message translates to:
+  /// **'暂无季信息'**
+  String get mediaDetailNoSeasons;
+
+  /// No description provided for @mediaDetailSeasonNumber.
+  ///
+  /// In zh, this message translates to:
+  /// **'第 {number} 季'**
+  String mediaDetailSeasonNumber(int number);
+
+  /// No description provided for @mediaDetailEpisodeNumber.
+  ///
+  /// In zh, this message translates to:
+  /// **'第 {number} 集'**
+  String mediaDetailEpisodeNumber(int number);
+
+  /// No description provided for @mediaDetailEpisodeCount.
+  ///
+  /// In zh, this message translates to:
+  /// **'{count} 集'**
+  String mediaDetailEpisodeCount(int count);
+
   /// No description provided for @mediaDetailStudios.
   ///
   /// In zh, this message translates to:

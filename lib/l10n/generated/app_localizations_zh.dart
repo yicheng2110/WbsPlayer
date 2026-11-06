@@ -239,6 +239,27 @@ class AppLocalizationsZh extends AppLocalizations {
   String get mediaDetailNoSimilar => '暂无类似内容';
 
   @override
+  String get mediaDetailSeasons => '剧集';
+
+  @override
+  String get mediaDetailNoSeasons => '暂无季信息';
+
+  @override
+  String mediaDetailSeasonNumber(int number) {
+    return '第 $number 季';
+  }
+
+  @override
+  String mediaDetailEpisodeNumber(int number) {
+    return '第 $number 集';
+  }
+
+  @override
+  String mediaDetailEpisodeCount(int count) {
+    return '$count 集';
+  }
+
+  @override
   String get mediaDetailStudios => '工作室';
 
   @override

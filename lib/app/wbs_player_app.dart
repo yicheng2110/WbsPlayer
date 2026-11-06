@@ -74,6 +74,14 @@ String _mediaDetailText(BuildContext context, String key) {
     'mediaDetailNoImages' => l10n.mediaDetailNoImages,
     'mediaDetailSimilar' => l10n.mediaDetailSimilar,
     'mediaDetailNoSimilar' => l10n.mediaDetailNoSimilar,
+    'mediaDetailSeasons' => l10n.mediaDetailSeasons,
+    'mediaDetailNoSeasons' => l10n.mediaDetailNoSeasons,
+    'mediaDetailSeasonNumber' =>
+      l10n.mediaDetailSeasonNumber(0).replaceAll('0', '{number}'),
+    'mediaDetailEpisodeNumber' =>
+      l10n.mediaDetailEpisodeNumber(0).replaceAll('0', '{number}'),
+    'mediaDetailEpisodeCount' =>
+      l10n.mediaDetailEpisodeCount(0).replaceAll('0', '{count}'),
     'mediaDetailStudios' => l10n.mediaDetailStudios,
     'mediaDetailNoStudio' => l10n.mediaDetailNoStudio,
     'mediaDetailExternalLinks' => l10n.mediaDetailExternalLinks,

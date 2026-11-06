@@ -4,13 +4,20 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../models/emby_media.dart';
+import 'emby_api_response_cache.dart';
 
 /// Reads a user's Emby libraries and media items through the REST API.
 class EmbyLibraryService {
   EmbyLibraryService({
     http.Client? client,
+    EmbyApiResponseCache? responseCache,
     this.requestTimeout = const Duration(seconds: 12),
-  }) : _client = client ?? http.Client();
+  }) : _client = client ?? http.Client(),
+       _responseCache =
+           responseCache ??
+           (client == null
+               ? EmbyApiResponseCache.shared
+               : EmbyApiResponseCache());
 
   static const _clientName = 'Wbs Player';
   static const _deviceName = 'Flutter';
@@ -18,27 +25,32 @@ class EmbyLibraryService {
   static const _clientVersion = '0.1.0';
 
   final http.Client _client;
+  final EmbyApiResponseCache _responseCache;
   final Duration requestTimeout;
 
   Future<List<EmbyLibrary>> loadLibraries({
     required String serverAddress,
     required String accessToken,
     required String userId,
+    bool forceRefresh = false,
   }) => _loadLibraries(
     serverAddress: serverAddress,
     accessToken: accessToken,
     userId: userId,
+    forceRefresh: forceRefresh,
   );
 
   Future<EmbyHomeContent> loadHome({
     required String serverAddress,
     required String accessToken,
     required String userId,
+    bool forceRefresh = false,
   }) async {
     final libraries = await _loadLibraries(
       serverAddress: serverAddress,
       accessToken: accessToken,
       userId: userId,
+      forceRefresh: forceRefresh,
     );
     final parts = await Future.wait<dynamic>([
       Future.wait(
@@ -50,6 +62,7 @@ class EmbyLibraryService {
               accessToken: accessToken,
               userId: userId,
               parentId: library.id,
+              forceRefresh: forceRefresh,
             ),
           ),
         ),
@@ -58,12 +71,14 @@ class EmbyLibraryService {
         serverAddress: serverAddress,
         accessToken: accessToken,
         userId: userId,
+        forceRefresh: forceRefresh,
       ),
       _loadLatestItems(
         serverAddress: serverAddress,
         accessToken: accessToken,
         userId: userId,
         limit: 10,
+        forceRefresh: forceRefresh,
       ),
     ]);
     return EmbyHomeContent(
@@ -77,6 +92,7 @@ class EmbyLibraryService {
     required String serverAddress,
     required String accessToken,
     required String userId,
+    bool forceRefresh = false,
   }) async {
     return _getItems(
       serverAddress: serverAddress,
@@ -91,6 +107,7 @@ class EmbyLibraryService {
         'EnableImageTypes': 'Primary,Thumb,Backdrop',
       },
       queryResult: true,
+      forceRefresh: forceRefresh,
     );
   }
 
@@ -98,6 +115,7 @@ class EmbyLibraryService {
     required String serverAddress,
     required String accessToken,
     required String userId,
+    bool forceRefresh = false,
   }) async {
     final items = await _getItems(
       serverAddress: serverAddress,
@@ -108,6 +126,7 @@ class EmbyLibraryService {
         'EnableImages': 'true',
       },
       queryResult: true,
+      forceRefresh: forceRefresh,
     );
     return items
         .map((item) => EmbyLibrary(id: item.id, name: item.name))
@@ -121,6 +140,7 @@ class EmbyLibraryService {
     required String userId,
     String? parentId,
     int limit = 20,
+    bool forceRefresh = false,
   }) async {
     return _getItems(
       serverAddress: serverAddress,
@@ -134,6 +154,7 @@ class EmbyLibraryService {
         'EnableImageTypes': 'Primary,Thumb,Backdrop',
       },
       queryResult: false,
+      forceRefresh: forceRefresh,
     );
   }
 
@@ -143,12 +164,14 @@ class EmbyLibraryService {
     required String path,
     required Map<String, String> queryParameters,
     required bool queryResult,
+    bool forceRefresh = false,
   }) async {
     final payload = await _getPayload(
       serverAddress: serverAddress,
       accessToken: accessToken,
       path: path,
       queryParameters: queryParameters,
+      forceRefresh: forceRefresh,
     );
     final dynamic rawItems;
     if (queryResult) {
@@ -172,6 +195,7 @@ class EmbyLibraryService {
     required bool ascending,
     required int startIndex,
     int limit = 40,
+    bool forceRefresh = false,
   }) async {
     final apiSort = sortBy.apiValue;
     if (apiSort == null) throw const EmbyLibraryRequestException();
@@ -179,6 +203,7 @@ class EmbyLibraryService {
       serverAddress: serverAddress,
       accessToken: accessToken,
       path: 'Users/$userId/Items',
+      forceRefresh: forceRefresh,
       queryParameters: {
         'ParentId': parentId,
         'Recursive': 'true',
@@ -209,11 +234,24 @@ class EmbyLibraryService {
     required String accessToken,
     required String path,
     required Map<String, String> queryParameters,
+    bool forceRefresh = false,
   }) async {
     final uri = _endpoint(
       serverAddress,
       path,
     ).replace(queryParameters: queryParameters);
+    final cacheServer = Uri.parse(serverAddress.trim())
+        .replace(userInfo: '', query: '', fragment: '')
+        .toString();
+    final cacheKey = '$cacheServer|${uri.path}?${uri.query}';
+    return _responseCache.getOrLoad<dynamic>(
+      cacheKey,
+      () => _requestPayload(uri, accessToken),
+      forceRefresh: forceRefresh,
+    );
+  }
+
+  Future<dynamic> _requestPayload(Uri uri, String accessToken) async {
     try {
       final response = await _client
           .get(uri, headers: {..._headers, 'X-Emby-Token': accessToken})

@@ -3,9 +3,51 @@ import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
+import 'package:wbs_player/features/servers/services/emby_api_response_cache.dart';
 import 'package:wbs_player/features/servers/services/emby_library_service.dart';
 
 void main() {
+  test('caches library item pages and refresh bypasses the cache', () async {
+    var requests = 0;
+    final service = EmbyLibraryService(
+      responseCache: EmbyApiResponseCache(),
+      client: MockClient((request) async {
+        requests++;
+        return http.Response(
+          jsonEncode({
+            'Items': [
+              {
+                'Id': 'movie-$requests',
+                'Name': 'Movie $requests',
+                'Type': 'Movie',
+              },
+            ],
+            'TotalRecordCount': 1,
+          }),
+          200,
+        );
+      }),
+    );
+    addTearDown(service.close);
+
+    Future<EmbyLibraryItemPage> load({bool refresh = false}) =>
+        service.loadLibraryItems(
+          serverAddress: 'http://emby.test:8096',
+          accessToken: 'token',
+          userId: 'user-1',
+          parentId: 'library-1',
+          sortBy: EmbyLibrarySort.title,
+          ascending: true,
+          startIndex: 0,
+          forceRefresh: refresh,
+        );
+
+    expect((await load()).items.single.id, 'movie-1');
+    expect((await load()).items.single.id, 'movie-1');
+    expect((await load(refresh: true)).items.single.id, 'movie-2');
+    expect(requests, 2);
+  });
+
   test('loads user views, resume list, and latest 20 per library', () async {
     final requests = <http.Request>[];
     final service = EmbyLibraryService(

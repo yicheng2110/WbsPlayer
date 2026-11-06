@@ -51,7 +51,7 @@ class EmbyMediaDetailViewModel extends ChangeNotifier {
   }
 
   /// Fetches required item details and optional sections through the service.
-  Future<void> load() async {
+  Future<void> load({bool forceRefresh = false}) async {
     final version = ++_requestVersion;
     _isLoading = true;
     _error = null;
@@ -62,6 +62,7 @@ class EmbyMediaDetailViewModel extends ChangeNotifier {
         accessToken: server.accessToken,
         userId: userId,
         itemId: itemId,
+        forceRefresh: forceRefresh,
       );
       if (version != _requestVersion) return;
       _content = result;
@@ -108,6 +109,7 @@ class EmbyMediaDetailViewModel extends ChangeNotifier {
           },
         }),
         similar: content.similar,
+        seasons: content.seasons,
         mediaSources: content.mediaSources,
         images: content.images,
         failedSections: content.failedSections,

@@ -9,6 +9,12 @@ class EmbyMediaDetail {
     required this.type,
     this.overview,
     this.originalTitle,
+    this.seriesName,
+    this.seriesId,
+    this.seasonId,
+    this.seasonName,
+    this.seasonNumber,
+    this.episodeNumber,
     this.productionYear,
     this.communityRating,
     this.criticRating,
@@ -36,6 +42,12 @@ class EmbyMediaDetail {
   final String type;
   final String? overview;
   final String? originalTitle;
+  final String? seriesName;
+  final String? seriesId;
+  final String? seasonId;
+  final String? seasonName;
+  final int? seasonNumber;
+  final int? episodeNumber;
   final int? productionYear;
   final double? communityRating;
   final double? criticRating;
@@ -61,6 +73,12 @@ class EmbyMediaDetail {
       type: _text(json['Type']) ?? '',
       overview: _text(json['Overview']),
       originalTitle: _text(json['OriginalTitle']),
+      seriesName: _text(json['SeriesName']),
+      seriesId: _id(json['SeriesId']),
+      seasonId: _id(json['SeasonId']),
+      seasonName: _text(json['SeasonName']),
+      seasonNumber: _nonNegativeInt(json['ParentIndexNumber']),
+      episodeNumber: _nonNegativeInt(json['IndexNumber']),
       productionYear: _positiveInt(json['ProductionYear']),
       communityRating: _number(json['CommunityRating']),
       criticRating: _number(json['CriticRating']),
@@ -94,6 +112,12 @@ class EmbyMediaDetail {
     'IsFolder': isFolder,
     if (overview != null) 'Overview': overview,
     if (originalTitle != null) 'OriginalTitle': originalTitle,
+    if (seriesName != null) 'SeriesName': seriesName,
+    if (seriesId != null) 'SeriesId': seriesId,
+    if (seasonId != null) 'SeasonId': seasonId,
+    if (seasonName != null) 'SeasonName': seasonName,
+    if (seasonNumber != null) 'ParentIndexNumber': seasonNumber,
+    if (episodeNumber != null) 'IndexNumber': episodeNumber,
     if (productionYear != null) 'ProductionYear': productionYear,
     if (communityRating != null) 'CommunityRating': communityRating,
     if (criticRating != null) 'CriticRating': criticRating,
@@ -134,25 +158,58 @@ class EmbyMediaDetail {
 }
 
 /// Additional endpoints may fail without making the item itself unreadable.
-enum EmbyMediaDetailSection { similar, images, mediaSources }
+enum EmbyMediaDetailSection { similar, images, mediaSources, seasons }
 
 class EmbyMediaDetailContent {
   EmbyMediaDetailContent({
     required this.detail,
     Iterable<EmbySimilarItem> similar = const [],
+    Iterable<EmbyMediaSeason> seasons = const [],
     Iterable<EmbyMediaSource>? mediaSources,
     Iterable<EmbyMediaDetailImage>? images,
     Iterable<EmbyMediaDetailSection> failedSections = const [],
   }) : similar = List.unmodifiable(similar),
+       seasons = List.unmodifiable(seasons),
        mediaSources = List.unmodifiable(mediaSources ?? detail.mediaSources),
        images = List.unmodifiable(images ?? detail.images),
        failedSections = Set.unmodifiable(failedSections);
 
   final EmbyMediaDetail detail;
   final List<EmbySimilarItem> similar;
+  final List<EmbyMediaSeason> seasons;
   final List<EmbyMediaSource> mediaSources;
   final List<EmbyMediaDetailImage> images;
   final Set<EmbyMediaDetailSection> failedSections;
+}
+
+class EmbyMediaSeason {
+  const EmbyMediaSeason({
+    required this.id,
+    required this.name,
+    this.indexNumber,
+    this.episodeCount,
+    this.productionYear,
+    this.primaryImageTag,
+  });
+
+  final String id;
+  final String name;
+  final int? indexNumber;
+  final int? episodeCount;
+  final int? productionYear;
+  final String? primaryImageTag;
+
+  factory EmbyMediaSeason.fromJson(Map<String, dynamic> json) =>
+      EmbyMediaSeason(
+        id: _id(json['Id']) ?? '',
+        name: _text(json['Name']) ?? '',
+        indexNumber: _nonNegativeInt(json['IndexNumber']),
+        episodeCount: _nonNegativeInt(json['ChildCount']),
+        productionYear: _positiveInt(json['ProductionYear']),
+        primaryImageTag:
+            _text(json['PrimaryImageTag']) ??
+            _text(_map(json['ImageTags'])['Primary']),
+      );
 }
 
 class EmbySimilarItem {

@@ -154,7 +154,7 @@ class _EmbyMediaDetailPageState extends State<EmbyMediaDetailPage> {
                 IconButton(
                   key: const Key('emby-media-detail-refresh'),
                   tooltip: embyMediaDetailText(widget.text, 'mediaDetailRetry'),
-                  onPressed: _viewModel.load,
+                  onPressed: () => _viewModel.load(forceRefresh: true),
                   icon: const Icon(Icons.refresh),
                 ),
               ],
@@ -195,7 +195,7 @@ class _EmbyMediaDetailPageState extends State<EmbyMediaDetailPage> {
                         ),
                         const SizedBox(height: 16),
                         FilledButton.icon(
-                          onPressed: _viewModel.load,
+                          onPressed: () => _viewModel.load(forceRefresh: true),
                           icon: const Icon(Icons.refresh),
                           label: Text(
                             embyMediaDetailText(
@@ -230,6 +230,7 @@ class _EmbyMediaDetailPageState extends State<EmbyMediaDetailPage> {
                 child: EmbyMediaDetailSections(
                   detail: content.detail,
                   similar: content.similar,
+                  seasons: content.seasons,
                   mediaSources: content.mediaSources,
                   images: content.images,
                   server: widget.server,

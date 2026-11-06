@@ -246,6 +246,27 @@ class AppLocalizationsEn extends AppLocalizations {
   String get mediaDetailNoSimilar => 'No similar items available';
 
   @override
+  String get mediaDetailSeasons => 'Seasons';
+
+  @override
+  String get mediaDetailNoSeasons => 'No seasons available';
+
+  @override
+  String mediaDetailSeasonNumber(int number) {
+    return 'Season $number';
+  }
+
+  @override
+  String mediaDetailEpisodeNumber(int number) {
+    return 'Episode $number';
+  }
+
+  @override
+  String mediaDetailEpisodeCount(int count) {
+    return '$count episodes';
+  }
+
+  @override
   String get mediaDetailStudios => 'Studios';
 
   @override

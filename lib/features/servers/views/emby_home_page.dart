@@ -91,6 +91,7 @@ class _EmbyHomePageState extends State<EmbyHomePage> {
       final content = await _loadHomeWithToken(
         userId: userId,
         accessToken: accessToken,
+        forceRefresh: _content != null,
       );
       if (!mounted || requestId != _requestId) return;
       setState(() {
@@ -109,12 +110,14 @@ class _EmbyHomePageState extends State<EmbyHomePage> {
   Future<EmbyHomeContent> _loadHomeWithToken({
     required String userId,
     required String accessToken,
+    required bool forceRefresh,
   }) async {
     try {
       return await _libraryService.loadHome(
         serverAddress: widget.server.address,
         accessToken: accessToken,
         userId: userId,
+        forceRefresh: forceRefresh,
       );
     } on EmbyLibraryRequestException catch (error) {
       if (error.statusCode != 401) rethrow;
@@ -137,6 +140,7 @@ class _EmbyHomePageState extends State<EmbyHomePage> {
         serverAddress: widget.server.address,
         accessToken: authentication.accessToken,
         userId: refreshedUserId,
+        forceRefresh: true,
       );
     }
   }

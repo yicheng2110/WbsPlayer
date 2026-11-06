@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../models/emby_media_detail.dart';
+import 'emby_api_response_cache.dart';
 
 /// Loads media detail and its optional related Emby resources.
 ///
@@ -12,8 +13,14 @@ import '../models/emby_media_detail.dart';
 class EmbyMediaDetailService {
   EmbyMediaDetailService({
     http.Client? client,
+    EmbyApiResponseCache? responseCache,
     this.requestTimeout = const Duration(seconds: 12),
   }) : _client = client ?? http.Client(),
+       _responseCache =
+           responseCache ??
+           (client == null
+               ? EmbyApiResponseCache.shared
+               : EmbyApiResponseCache()),
        _ownsClient = client == null;
 
   static const _clientName = 'Wbs Player';
@@ -23,10 +30,12 @@ class EmbyMediaDetailService {
   static const _detailFields =
       'Overview,OriginalTitle,Genres,People,Studios,MediaSources,MediaStreams,'
       'ExternalUrls,ProductionYear,CommunityRating,CriticRating,OfficialRating,'
-      'PremiereDate,RunTimeTicks,UserData,BackdropImageTags,ParentBackdropItemId,'
+      'PremiereDate,RunTimeTicks,UserData,SeriesName,SeriesId,SeasonId,SeasonName,'
+      'ParentIndexNumber,IndexNumber,BackdropImageTags,ParentBackdropItemId,'
       'ParentBackdropImageTags';
 
   final http.Client _client;
+  final EmbyApiResponseCache _responseCache;
   final bool _ownsClient;
   final Duration requestTimeout;
 
@@ -38,20 +47,23 @@ class EmbyMediaDetailService {
     required String accessToken,
     required String userId,
     required String itemId,
+    bool forceRefresh = false,
   }) async {
     final detail = await getDetail(
       serverAddress: serverAddress,
       accessToken: accessToken,
       userId: userId,
       itemId: itemId,
+      forceRefresh: forceRefresh,
     );
     final failedSections = <EmbyMediaDetailSection>{};
-    final results = await Future.wait<Object?>([
+    final requests = <Future<Object?>>[
       getSimilar(
         serverAddress: serverAddress,
         accessToken: accessToken,
         userId: userId,
         itemId: itemId,
+        forceRefresh: forceRefresh,
       ).catchError((Object _) {
         failedSections.add(EmbyMediaDetailSection.similar);
         return const <EmbySimilarItem>[];
@@ -60,23 +72,47 @@ class EmbyMediaDetailService {
         serverAddress: serverAddress,
         accessToken: accessToken,
         itemId: itemId,
+        userId: userId,
+        forceRefresh: forceRefresh,
       ).catchError((Object _) {
         failedSections.add(EmbyMediaDetailSection.images);
         return const <EmbyMediaDetailImage>[];
       }),
-      getMediaSources(
-        serverAddress: serverAddress,
-        accessToken: accessToken,
-        userId: userId,
-        itemId: itemId,
-      ).catchError((Object _) {
-        failedSections.add(EmbyMediaDetailSection.mediaSources);
-        return const <EmbyMediaSource>[];
-      }),
-    ]);
+      if (detail.mediaSources.isNotEmpty)
+        Future<List<EmbyMediaSource>>.value(detail.mediaSources)
+      else
+        getMediaSources(
+          serverAddress: serverAddress,
+          accessToken: accessToken,
+          userId: userId,
+          itemId: itemId,
+          forceRefresh: forceRefresh,
+        ).catchError((Object _) {
+          failedSections.add(EmbyMediaDetailSection.mediaSources);
+          return const <EmbyMediaSource>[];
+        }),
+    ];
+    if (detail.type.toLowerCase() == 'series') {
+      requests.add(
+        getSeasons(
+          serverAddress: serverAddress,
+          accessToken: accessToken,
+          userId: userId,
+          seriesId: itemId,
+          forceRefresh: forceRefresh,
+        ).catchError((Object _) {
+          failedSections.add(EmbyMediaDetailSection.seasons);
+          return const <EmbyMediaSeason>[];
+        }),
+      );
+    }
+    final results = await Future.wait<Object?>(requests);
     return EmbyMediaDetailContent(
       detail: detail,
       similar: results[0] as List<EmbySimilarItem>,
+      seasons: detail.type.toLowerCase() == 'series'
+          ? results[3] as List<EmbyMediaSeason>
+          : const <EmbyMediaSeason>[],
       images: _mergeImages(
         detail.images,
         results[1] as List<EmbyMediaDetailImage>,
@@ -86,12 +122,40 @@ class EmbyMediaDetailService {
     );
   }
 
+  /// Loads seasons for a series, including episode counts and poster tags.
+  Future<List<EmbyMediaSeason>> getSeasons({
+    required String serverAddress,
+    required String accessToken,
+    required String userId,
+    required String seriesId,
+    bool forceRefresh = false,
+  }) async {
+    final payload = await _getJson(
+      _endpoint(serverAddress, 'Shows/${_segment(seriesId)}/Seasons').replace(
+        queryParameters: {
+          'UserId': userId,
+          'Fields': 'ChildCount,ProductionYear',
+          'EnableImages': 'true',
+          'EnableImageTypes': 'Primary',
+        },
+      ),
+      accessToken,
+      cacheScope: _cacheScope(serverAddress, userId),
+      forceRefresh: forceRefresh,
+    );
+    return _readItems(payload)
+        .map(EmbyMediaSeason.fromJson)
+        .where((season) => season.id.isNotEmpty)
+        .toList(growable: false);
+  }
+
   /// Loads the main item. Missing/malformed essential payloads throw.
   Future<EmbyMediaDetail> getDetail({
     required String serverAddress,
     required String accessToken,
     required String userId,
     required String itemId,
+    bool forceRefresh = false,
   }) async {
     final uri =
         _endpoint(
@@ -105,7 +169,14 @@ class EmbyMediaDetailService {
             'EnableImageTypes': 'Primary,Backdrop,Thumb,Logo,Art,Banner,Disc',
           },
         );
-    final item = _asMap(await _getJson(uri, accessToken));
+    final item = _asMap(
+      await _getJson(
+        uri,
+        accessToken,
+        cacheScope: _cacheScope(serverAddress, userId),
+        forceRefresh: forceRefresh,
+      ),
+    );
     if (item == null) throw const EmbyMediaDetailRequestException();
     final detail = EmbyMediaDetail.fromJson(item);
     if (detail.id.isEmpty) throw const EmbyMediaDetailRequestException();
@@ -118,6 +189,7 @@ class EmbyMediaDetailService {
     required String userId,
     required String itemId,
     int limit = 16,
+    bool forceRefresh = false,
   }) async {
     final payload = await _getJson(
       _endpoint(serverAddress, 'Items/${_segment(itemId)}/Similar').replace(
@@ -130,6 +202,8 @@ class EmbyMediaDetailService {
         },
       ),
       accessToken,
+      cacheScope: _cacheScope(serverAddress, userId),
+      forceRefresh: forceRefresh,
     );
     return _readItems(payload)
         .map(EmbySimilarItem.fromJson)
@@ -142,10 +216,14 @@ class EmbyMediaDetailService {
     required String serverAddress,
     required String accessToken,
     required String itemId,
+    String userId = '',
+    bool forceRefresh = false,
   }) async {
     final payload = await _getJson(
       _endpoint(serverAddress, 'Items/${_segment(itemId)}/Images'),
       accessToken,
+      cacheScope: _cacheScope(serverAddress, userId),
+      forceRefresh: forceRefresh,
     );
     return _readItems(payload)
         .map((image) => EmbyMediaDetailImage.fromJson(image, itemId: itemId))
@@ -159,11 +237,17 @@ class EmbyMediaDetailService {
     required String accessToken,
     required String userId,
     required String itemId,
+    bool forceRefresh = false,
   }) async {
-    final payload = await _postJson(
-      _endpoint(serverAddress, 'Items/${_segment(itemId)}/PlaybackInfo'),
-      accessToken,
-      body: {'Id': itemId, 'UserId': userId},
+    final payload = await _responseCache.getOrLoad<dynamic>(
+      '${_cacheScope(serverAddress, userId)}playback-info:$itemId',
+      () => _postJson(
+        _endpoint(serverAddress, 'Items/${_segment(itemId)}/PlaybackInfo'),
+        accessToken,
+        body: {'Id': itemId, 'UserId': userId},
+      ),
+      forceRefresh: forceRefresh,
+      persistValue: false,
     );
     final response = _asMap(payload);
     final sourcePayload = response?['MediaSources'];
@@ -202,6 +286,7 @@ class EmbyMediaDetailService {
       if (response.statusCode < 200 || response.statusCode >= 300) {
         throw EmbyMediaDetailRequestException(response.statusCode);
       }
+      _responseCache.invalidatePrefix(_cacheScope(serverAddress, userId));
     } on EmbyMediaDetailRequestException {
       rethrow;
     } on TimeoutException {
@@ -243,7 +328,18 @@ class EmbyMediaDetailService {
     }
   }
 
-  Future<dynamic> _getJson(Uri uri, String accessToken) async {
+  Future<dynamic> _getJson(
+    Uri uri,
+    String accessToken, {
+    required String cacheScope,
+    bool forceRefresh = false,
+  }) => _responseCache.getOrLoad<dynamic>(
+    '$cacheScope${uri.toString()}',
+    () => _requestJson(uri, accessToken),
+    forceRefresh: forceRefresh,
+  );
+
+  Future<dynamic> _requestJson(Uri uri, String accessToken) async {
     try {
       final response = await _client
           .get(uri, headers: {..._headers, 'X-Emby-Token': accessToken})
@@ -291,6 +387,13 @@ class EmbyMediaDetailService {
       port: baseUri.hasPort ? baseUri.port : null,
       pathSegments: pathSegments,
     );
+  }
+
+  String _cacheScope(String serverAddress, String userId) {
+    final sanitizedServer = Uri.parse(serverAddress.trim())
+        .replace(userInfo: '', query: '', fragment: '')
+        .toString();
+    return '$sanitizedServer|$userId|';
   }
 
   /// Releases the HTTP client if this service created it.
