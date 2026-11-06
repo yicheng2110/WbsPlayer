@@ -44,5 +44,31 @@
   "languageChinese": "Simplified Chinese",
   "languageEnglish": "English",
   "languageSaveFailed": "Failed to save the language setting.",
-  "aggregationTab": "Aggregate"
+  "aggregationTab": "Aggregate",
+  "checkForUpdates": "Check for updates",
+  "checkingForUpdates": "Checking for updates…",
+  "latestVersionInstalled": "You are using the latest version",
+  "updateAvailableTitle": "Update available",
+  "updateAvailableMessage": "Current version: {currentVersion}\nLatest version: {latestVersion}",
+  "@updateAvailableMessage": {
+    "placeholders": {
+      "currentVersion": {},
+      "latestVersion": {}
+    }
+  },
+  "downloadUpdate": "Download update",
+  "downloadingUpdate": "Downloading update…",
+  "downloadPercent": "{percent}%",
+  "@downloadPercent": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "openingUpdateInstaller": "Download complete. Opening installer…",
+  "updateCheckFailed": "Could not check for updates. Check your connection and retry.",
+  "updateDownloadFailed": "Could not download the update. Please try again.",
+  "updateInstallerFailed": "Could not open the installer. Check your system install permission.",
+  "updateInstallerStarted": "Installer opened. Follow the system prompts to update."
 }

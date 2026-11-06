@@ -150,4 +150,47 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get aggregationTab => '聚合视界';
+
+  @override
+  String get checkForUpdates => '检查更新';
+
+  @override
+  String get checkingForUpdates => '正在检查更新…';
+
+  @override
+  String get latestVersionInstalled => '已安装最新版本';
+
+  @override
+  String get updateAvailableTitle => '发现新版本';
+
+  @override
+  String updateAvailableMessage(Object currentVersion, Object latestVersion) {
+    return '当前版本：$currentVersion\n最新版本：$latestVersion';
+  }
+
+  @override
+  String get downloadUpdate => '下载更新';
+
+  @override
+  String get downloadingUpdate => '正在下载更新…';
+
+  @override
+  String downloadPercent(int percent) {
+    return '$percent%';
+  }
+
+  @override
+  String get openingUpdateInstaller => '下载完成，正在打开安装程序…';
+
+  @override
+  String get updateCheckFailed => '检查更新失败，请检查网络后重试';
+
+  @override
+  String get updateDownloadFailed => '下载更新失败，请稍后重试';
+
+  @override
+  String get updateInstallerFailed => '无法打开安装程序，请检查系统安装权限';
+
+  @override
+  String get updateInstallerStarted => '安装程序已打开，请按系统提示完成更新';
 }

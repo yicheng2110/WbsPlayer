@@ -373,6 +373,84 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'聚合视界'**
   String get aggregationTab;
+
+  /// No description provided for @checkForUpdates.
+  ///
+  /// In zh, this message translates to:
+  /// **'检查更新'**
+  String get checkForUpdates;
+
+  /// No description provided for @checkingForUpdates.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在检查更新…'**
+  String get checkingForUpdates;
+
+  /// No description provided for @latestVersionInstalled.
+  ///
+  /// In zh, this message translates to:
+  /// **'已安装最新版本'**
+  String get latestVersionInstalled;
+
+  /// No description provided for @updateAvailableTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'发现新版本'**
+  String get updateAvailableTitle;
+
+  /// No description provided for @updateAvailableMessage.
+  ///
+  /// In zh, this message translates to:
+  /// **'当前版本：{currentVersion}\n最新版本：{latestVersion}'**
+  String updateAvailableMessage(Object currentVersion, Object latestVersion);
+
+  /// No description provided for @downloadUpdate.
+  ///
+  /// In zh, this message translates to:
+  /// **'下载更新'**
+  String get downloadUpdate;
+
+  /// No description provided for @downloadingUpdate.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在下载更新…'**
+  String get downloadingUpdate;
+
+  /// No description provided for @downloadPercent.
+  ///
+  /// In zh, this message translates to:
+  /// **'{percent}%'**
+  String downloadPercent(int percent);
+
+  /// No description provided for @openingUpdateInstaller.
+  ///
+  /// In zh, this message translates to:
+  /// **'下载完成，正在打开安装程序…'**
+  String get openingUpdateInstaller;
+
+  /// No description provided for @updateCheckFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'检查更新失败，请检查网络后重试'**
+  String get updateCheckFailed;
+
+  /// No description provided for @updateDownloadFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'下载更新失败，请稍后重试'**
+  String get updateDownloadFailed;
+
+  /// No description provided for @updateInstallerFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'无法打开安装程序，请检查系统安装权限'**
+  String get updateInstallerFailed;
+
+  /// No description provided for @updateInstallerStarted.
+  ///
+  /// In zh, this message translates to:
+  /// **'安装程序已打开，请按系统提示完成更新'**
+  String get updateInstallerStarted;
 }
 
 class _AppLocalizationsDelegate

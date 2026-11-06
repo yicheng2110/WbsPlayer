@@ -156,4 +156,51 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get aggregationTab => 'Aggregate';
+
+  @override
+  String get checkForUpdates => 'Check for updates';
+
+  @override
+  String get checkingForUpdates => 'Checking for updates…';
+
+  @override
+  String get latestVersionInstalled => 'You are using the latest version';
+
+  @override
+  String get updateAvailableTitle => 'Update available';
+
+  @override
+  String updateAvailableMessage(Object currentVersion, Object latestVersion) {
+    return 'Current version: $currentVersion\nLatest version: $latestVersion';
+  }
+
+  @override
+  String get downloadUpdate => 'Download update';
+
+  @override
+  String get downloadingUpdate => 'Downloading update…';
+
+  @override
+  String downloadPercent(int percent) {
+    return '$percent%';
+  }
+
+  @override
+  String get openingUpdateInstaller => 'Download complete. Opening installer…';
+
+  @override
+  String get updateCheckFailed =>
+      'Could not check for updates. Check your connection and retry.';
+
+  @override
+  String get updateDownloadFailed =>
+      'Could not download the update. Please try again.';
+
+  @override
+  String get updateInstallerFailed =>
+      'Could not open the installer. Check your system install permission.';
+
+  @override
+  String get updateInstallerStarted =>
+      'Installer opened. Follow the system prompts to update.';
 }

@@ -44,5 +44,31 @@
   "languageChinese": "简体中文",
   "languageEnglish": "English",
   "languageSaveFailed": "语言设置保存失败",
-  "aggregationTab": "聚合视界"
+  "aggregationTab": "聚合视界",
+  "checkForUpdates": "检查更新",
+  "checkingForUpdates": "正在检查更新…",
+  "latestVersionInstalled": "已安装最新版本",
+  "updateAvailableTitle": "发现新版本",
+  "updateAvailableMessage": "当前版本：{currentVersion}\n最新版本：{latestVersion}",
+  "@updateAvailableMessage": {
+    "placeholders": {
+      "currentVersion": {},
+      "latestVersion": {}
+    }
+  },
+  "downloadUpdate": "下载更新",
+  "downloadingUpdate": "正在下载更新…",
+  "downloadPercent": "{percent}%",
+  "@downloadPercent": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "openingUpdateInstaller": "下载完成，正在打开安装程序…",
+  "updateCheckFailed": "检查更新失败，请检查网络后重试",
+  "updateDownloadFailed": "下载更新失败，请稍后重试",
+  "updateInstallerFailed": "无法打开安装程序，请检查系统安装权限",
+  "updateInstallerStarted": "安装程序已打开，请按系统提示完成更新"
 }

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../app/locale_preference.dart';
 import '../../../l10n/app_localizations_context.dart';
 import '../../../ui/core/app_colors.dart';
+import '../widgets/release_update_tile.dart';
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({
@@ -31,6 +32,7 @@ class SettingsPage extends StatelessWidget {
           trailing: const Icon(Icons.chevron_right),
           onTap: isLocaleLoaded ? () => _showLanguageDialog(context) : null,
         ),
+        const ReleaseUpdateTile(),
       ],
     );
   }
