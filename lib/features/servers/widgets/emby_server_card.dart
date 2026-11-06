@@ -5,10 +5,16 @@ import '../../../ui/core/app_colors.dart';
 import '../models/emby_server.dart';
 
 class EmbyServerCard extends StatelessWidget {
-  const EmbyServerCard({super.key, required this.server, this.tokenValid});
+  const EmbyServerCard({
+    super.key,
+    required this.server,
+    this.tokenValid,
+    this.onTap,
+  });
 
   final EmbyServer server;
   final bool? tokenValid;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -51,11 +57,7 @@ class EmbyServerCard extends StatelessWidget {
           ),
         ),
         trailing: const Icon(Icons.chevron_right),
-        onTap: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(context.l10n.embyMediaBrowsingComingSoon)),
-          );
-        },
+        onTap: onTap,
       ),
     );
   }

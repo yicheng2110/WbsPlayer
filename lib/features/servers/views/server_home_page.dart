@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../../app/locale_preference.dart';
@@ -18,16 +19,22 @@ class ServerHomePage extends StatefulWidget {
     super.key,
     this.serverService,
     this.serverRepository,
+    required this.onServerSelected,
     required this.localePreference,
     required this.isLocaleLoaded,
     required this.onLocalePreferenceSelected,
+    required this.localePreferenceListenable,
+    required this.localeLoadedListenable,
   });
 
   final EmbyServerService? serverService;
   final ServerRepository? serverRepository;
+  final ValueChanged<EmbyServer> onServerSelected;
   final LocalePreference localePreference;
   final bool isLocaleLoaded;
   final Future<void> Function(LocalePreference) onLocalePreferenceSelected;
+  final ValueListenable<LocalePreference> localePreferenceListenable;
+  final ValueListenable<bool> localeLoadedListenable;
 
   @override
   State<ServerHomePage> createState() => _ServerHomePageState();
@@ -120,10 +127,18 @@ class _ServerHomePageState extends State<ServerHomePage> {
       ),
       body: isServerTab
           ? _buildServerList()
-          : SettingsPage(
-              localePreference: widget.localePreference,
-              isLocaleLoaded: widget.isLocaleLoaded,
-              onLocalePreferenceSelected: widget.onLocalePreferenceSelected,
+          : ValueListenableBuilder<LocalePreference>(
+              valueListenable: widget.localePreferenceListenable,
+              builder: (context, preference, child) =>
+                  ValueListenableBuilder<bool>(
+                    valueListenable: widget.localeLoadedListenable,
+                    builder: (context, isLoaded, child) => SettingsPage(
+                      localePreference: preference,
+                      isLocaleLoaded: isLoaded,
+                      onLocalePreferenceSelected:
+                          widget.onLocalePreferenceSelected,
+                    ),
+                  ),
             ),
       floatingActionButton: isServerTab
           ? SizedBox(
@@ -208,6 +223,7 @@ class _ServerHomePageState extends State<ServerHomePage> {
             return EmbyServerCard(
               server: server,
               tokenValid: id == null ? null : _tokenValidity[id],
+              onTap: () => widget.onServerSelected(server),
             );
           },
         ),

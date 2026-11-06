@@ -89,6 +89,47 @@ class AppLocalizationsEn extends AppLocalizations {
       'Media browsing will be added later';
 
   @override
+  String get homeFeatured => 'Featured';
+
+  @override
+  String get homeContinueWatching => 'Continue watching';
+
+  @override
+  String get homeLibraries => 'Libraries';
+
+  @override
+  String get homeLoading => 'Loading your library…';
+
+  @override
+  String get homeLoadFailed =>
+      'Could not load media. Check the server connection or sign in again.';
+
+  @override
+  String get homeRetry => 'Retry';
+
+  @override
+  String get homeNoItems => 'No items yet';
+
+  @override
+  String get homeViewAll => 'View all';
+
+  @override
+  String get homeOverviewUnavailable => 'No overview available';
+
+  @override
+  String homeRating(Object rating) {
+    return 'Rating $rating';
+  }
+
+  @override
+  String homeServer(Object name) {
+    return 'Server: $name';
+  }
+
+  @override
+  String get homeRefreshing => 'Refreshing…';
+
+  @override
   String get serverSaveFailed =>
       'Sign-in succeeded, but saving the server failed. Please retry.';
 

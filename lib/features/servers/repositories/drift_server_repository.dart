@@ -1,3 +1,5 @@
+import 'package:drift/drift.dart';
+
 import '../data/server_database.dart';
 import '../models/emby_server.dart';
 import 'server_repository.dart';
@@ -24,6 +26,7 @@ class DriftServerRepository implements ServerRepository {
             password: row.password,
             accessToken: row.accessToken,
             serverId: row.serverId,
+            userId: row.userId,
           ),
         )
         .toList(growable: false);
@@ -41,9 +44,26 @@ class DriftServerRepository implements ServerRepository {
             password: server.password,
             accessToken: server.accessToken,
             serverId: server.serverId,
+            userId: Value(server.userId),
           ),
         );
     return server.copyWith(localId: id);
+  }
+
+  @override
+  Future<void> updateAuthentication({
+    required int localId,
+    required String accessToken,
+    required String userId,
+  }) async {
+    await (_database.update(
+      _database.storedServers,
+    )..where((row) => row.id.equals(localId))).write(
+      StoredServersCompanion(
+        accessToken: Value(accessToken),
+        userId: Value(userId),
+      ),
+    );
   }
 
   @override

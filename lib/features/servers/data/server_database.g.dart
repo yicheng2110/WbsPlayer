@@ -86,6 +86,15 @@ class $StoredServersTable extends StoredServers
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _userIdMeta = const VerificationMeta('userId');
+  @override
+  late final GeneratedColumn<String> userId = GeneratedColumn<String>(
+    'user_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -95,6 +104,7 @@ class $StoredServersTable extends StoredServers
     password,
     accessToken,
     serverId,
+    userId,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -162,6 +172,12 @@ class $StoredServersTable extends StoredServers
     } else if (isInserting) {
       context.missing(_serverIdMeta);
     }
+    if (data.containsKey('user_id')) {
+      context.handle(
+        _userIdMeta,
+        userId.isAcceptableOrUnknown(data['user_id']!, _userIdMeta),
+      );
+    }
     return context;
   }
 
@@ -199,6 +215,10 @@ class $StoredServersTable extends StoredServers
         DriftSqlType.string,
         data['${effectivePrefix}server_id'],
       )!,
+      userId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}user_id'],
+      ),
     );
   }
 
@@ -216,6 +236,7 @@ class StoredServer extends DataClass implements Insertable<StoredServer> {
   final String password;
   final String accessToken;
   final String serverId;
+  final String? userId;
   const StoredServer({
     required this.id,
     required this.name,
@@ -224,6 +245,7 @@ class StoredServer extends DataClass implements Insertable<StoredServer> {
     required this.password,
     required this.accessToken,
     required this.serverId,
+    this.userId,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -235,6 +257,9 @@ class StoredServer extends DataClass implements Insertable<StoredServer> {
     map['password'] = Variable<String>(password);
     map['access_token'] = Variable<String>(accessToken);
     map['server_id'] = Variable<String>(serverId);
+    if (!nullToAbsent || userId != null) {
+      map['user_id'] = Variable<String>(userId);
+    }
     return map;
   }
 
@@ -247,6 +272,9 @@ class StoredServer extends DataClass implements Insertable<StoredServer> {
       password: Value(password),
       accessToken: Value(accessToken),
       serverId: Value(serverId),
+      userId: userId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(userId),
     );
   }
 
@@ -263,6 +291,7 @@ class StoredServer extends DataClass implements Insertable<StoredServer> {
       password: serializer.fromJson<String>(json['password']),
       accessToken: serializer.fromJson<String>(json['accessToken']),
       serverId: serializer.fromJson<String>(json['serverId']),
+      userId: serializer.fromJson<String?>(json['userId']),
     );
   }
   @override
@@ -276,6 +305,7 @@ class StoredServer extends DataClass implements Insertable<StoredServer> {
       'password': serializer.toJson<String>(password),
       'accessToken': serializer.toJson<String>(accessToken),
       'serverId': serializer.toJson<String>(serverId),
+      'userId': serializer.toJson<String?>(userId),
     };
   }
 
@@ -287,6 +317,7 @@ class StoredServer extends DataClass implements Insertable<StoredServer> {
     String? password,
     String? accessToken,
     String? serverId,
+    Value<String?> userId = const Value.absent(),
   }) => StoredServer(
     id: id ?? this.id,
     name: name ?? this.name,
@@ -295,6 +326,7 @@ class StoredServer extends DataClass implements Insertable<StoredServer> {
     password: password ?? this.password,
     accessToken: accessToken ?? this.accessToken,
     serverId: serverId ?? this.serverId,
+    userId: userId.present ? userId.value : this.userId,
   );
   StoredServer copyWithCompanion(StoredServersCompanion data) {
     return StoredServer(
@@ -307,6 +339,7 @@ class StoredServer extends DataClass implements Insertable<StoredServer> {
           ? data.accessToken.value
           : this.accessToken,
       serverId: data.serverId.present ? data.serverId.value : this.serverId,
+      userId: data.userId.present ? data.userId.value : this.userId,
     );
   }
 
@@ -319,14 +352,23 @@ class StoredServer extends DataClass implements Insertable<StoredServer> {
           ..write('username: $username, ')
           ..write('password: $password, ')
           ..write('accessToken: $accessToken, ')
-          ..write('serverId: $serverId')
+          ..write('serverId: $serverId, ')
+          ..write('userId: $userId')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, name, address, username, password, accessToken, serverId);
+  int get hashCode => Object.hash(
+    id,
+    name,
+    address,
+    username,
+    password,
+    accessToken,
+    serverId,
+    userId,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -337,7 +379,8 @@ class StoredServer extends DataClass implements Insertable<StoredServer> {
           other.username == this.username &&
           other.password == this.password &&
           other.accessToken == this.accessToken &&
-          other.serverId == this.serverId);
+          other.serverId == this.serverId &&
+          other.userId == this.userId);
 }
 
 class StoredServersCompanion extends UpdateCompanion<StoredServer> {
@@ -348,6 +391,7 @@ class StoredServersCompanion extends UpdateCompanion<StoredServer> {
   final Value<String> password;
   final Value<String> accessToken;
   final Value<String> serverId;
+  final Value<String?> userId;
   const StoredServersCompanion({
     this.id = const Value.absent(),
     this.name = const Value.absent(),
@@ -356,6 +400,7 @@ class StoredServersCompanion extends UpdateCompanion<StoredServer> {
     this.password = const Value.absent(),
     this.accessToken = const Value.absent(),
     this.serverId = const Value.absent(),
+    this.userId = const Value.absent(),
   });
   StoredServersCompanion.insert({
     this.id = const Value.absent(),
@@ -365,6 +410,7 @@ class StoredServersCompanion extends UpdateCompanion<StoredServer> {
     required String password,
     required String accessToken,
     required String serverId,
+    this.userId = const Value.absent(),
   }) : name = Value(name),
        address = Value(address),
        username = Value(username),
@@ -379,6 +425,7 @@ class StoredServersCompanion extends UpdateCompanion<StoredServer> {
     Expression<String>? password,
     Expression<String>? accessToken,
     Expression<String>? serverId,
+    Expression<String>? userId,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -388,6 +435,7 @@ class StoredServersCompanion extends UpdateCompanion<StoredServer> {
       if (password != null) 'password': password,
       if (accessToken != null) 'access_token': accessToken,
       if (serverId != null) 'server_id': serverId,
+      if (userId != null) 'user_id': userId,
     });
   }
 
@@ -399,6 +447,7 @@ class StoredServersCompanion extends UpdateCompanion<StoredServer> {
     Value<String>? password,
     Value<String>? accessToken,
     Value<String>? serverId,
+    Value<String?>? userId,
   }) {
     return StoredServersCompanion(
       id: id ?? this.id,
@@ -408,6 +457,7 @@ class StoredServersCompanion extends UpdateCompanion<StoredServer> {
       password: password ?? this.password,
       accessToken: accessToken ?? this.accessToken,
       serverId: serverId ?? this.serverId,
+      userId: userId ?? this.userId,
     );
   }
 
@@ -435,6 +485,9 @@ class StoredServersCompanion extends UpdateCompanion<StoredServer> {
     if (serverId.present) {
       map['server_id'] = Variable<String>(serverId.value);
     }
+    if (userId.present) {
+      map['user_id'] = Variable<String>(userId.value);
+    }
     return map;
   }
 
@@ -447,7 +500,8 @@ class StoredServersCompanion extends UpdateCompanion<StoredServer> {
           ..write('username: $username, ')
           ..write('password: $password, ')
           ..write('accessToken: $accessToken, ')
-          ..write('serverId: $serverId')
+          ..write('serverId: $serverId, ')
+          ..write('userId: $userId')
           ..write(')'))
         .toString();
   }
@@ -473,6 +527,7 @@ typedef $$StoredServersTableCreateCompanionBuilder =
       required String password,
       required String accessToken,
       required String serverId,
+      Value<String?> userId,
     });
 typedef $$StoredServersTableUpdateCompanionBuilder =
     StoredServersCompanion Function({
@@ -483,6 +538,7 @@ typedef $$StoredServersTableUpdateCompanionBuilder =
       Value<String> password,
       Value<String> accessToken,
       Value<String> serverId,
+      Value<String?> userId,
     });
 
 class $$StoredServersTableFilterComposer
@@ -526,6 +582,11 @@ class $$StoredServersTableFilterComposer
 
   ColumnFilters<String> get serverId => $composableBuilder(
     column: $table.serverId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get userId => $composableBuilder(
+    column: $table.userId,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -573,6 +634,11 @@ class $$StoredServersTableOrderingComposer
     column: $table.serverId,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$StoredServersTableAnnotationComposer
@@ -606,6 +672,9 @@ class $$StoredServersTableAnnotationComposer
 
   GeneratedColumn<String> get serverId =>
       $composableBuilder(column: $table.serverId, builder: (column) => column);
+
+  GeneratedColumn<String> get userId =>
+      $composableBuilder(column: $table.userId, builder: (column) => column);
 }
 
 class $$StoredServersTableTableManager
@@ -648,6 +717,7 @@ class $$StoredServersTableTableManager
                 Value<String> password = const Value.absent(),
                 Value<String> accessToken = const Value.absent(),
                 Value<String> serverId = const Value.absent(),
+                Value<String?> userId = const Value.absent(),
               }) => StoredServersCompanion(
                 id: id,
                 name: name,
@@ -656,6 +726,7 @@ class $$StoredServersTableTableManager
                 password: password,
                 accessToken: accessToken,
                 serverId: serverId,
+                userId: userId,
               ),
           createCompanionCallback:
               ({
@@ -666,6 +737,7 @@ class $$StoredServersTableTableManager
                 required String password,
                 required String accessToken,
                 required String serverId,
+                Value<String?> userId = const Value.absent(),
               }) => StoredServersCompanion.insert(
                 id: id,
                 name: name,
@@ -674,6 +746,7 @@ class $$StoredServersTableTableManager
                 password: password,
                 accessToken: accessToken,
                 serverId: serverId,
+                userId: userId,
               ),
           withReferenceMapper: (p0) => p0
               .map(

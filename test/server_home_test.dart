@@ -10,6 +10,7 @@ import 'package:wbs_player/features/servers/data/server_database.dart';
 import 'package:wbs_player/features/servers/models/emby_server.dart';
 import 'package:wbs_player/features/servers/repositories/drift_server_repository.dart';
 import 'package:wbs_player/features/servers/repositories/server_repository.dart';
+import 'package:wbs_player/features/servers/services/emby_library_service.dart';
 import 'package:wbs_player/features/servers/services/emby_server_service.dart';
 
 void main() {
@@ -35,6 +36,117 @@ void main() {
     expect(find.text('马上添加 Emby 服务器，以开始您的媒体之旅！'), findsOneWidget);
     expect(find.byKey(const Key('add-server-button')), findsOneWidget);
     expect(find.text('聚合视界'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('opens the selected server poster wall from Emby data', (
+    tester,
+  ) async {
+    tester.binding.platformDispatcher.localeTestValue = const Locale(
+      'zh',
+      'CN',
+    );
+    addTearDown(tester.binding.platformDispatcher.clearLocaleTestValue);
+    const server = EmbyServer(
+      localId: 7,
+      name: 'Home Emby',
+      address: 'http://emby.test:8096',
+      username: 'alice',
+      password: 'secret',
+      accessToken: 'token-abc',
+      serverId: 'server-123',
+      userId: 'user-456',
+    );
+    final repository = _FakeServerRepository(servers: [server]);
+    addTearDown(repository.close);
+    final serverService = EmbyServerService(
+      client: MockClient((request) async {
+        if (request.url.path.endsWith('/System/Info')) {
+          return http.Response(jsonEncode({'Id': 'server-123'}), 200);
+        }
+        return http.Response('', 404);
+      }),
+    );
+    addTearDown(serverService.close);
+    final mediaRequests = <http.Request>[];
+    final libraryService = EmbyLibraryService(
+      client: MockClient((request) async {
+        mediaRequests.add(request);
+        if (request.url.path.endsWith('/Users/user-456/Views')) {
+          return http.Response(
+            jsonEncode({
+              'Items': [
+                {'Id': 'library-1', 'Name': 'Movies'},
+              ],
+            }),
+            200,
+          );
+        }
+        if (request.url.path.endsWith('/Users/user-456/Items/Resume')) {
+          return http.Response(
+            jsonEncode({
+              'Items': [
+                {
+                  'Id': 'resume-1',
+                  'Name': 'Continue watching',
+                  'Type': 'Movie',
+                  'RunTimeTicks': 1000,
+                  'UserData': {'PlaybackPositionTicks': 300},
+                },
+              ],
+            }),
+            200,
+          );
+        }
+        if (request.url.path.endsWith('/Users/user-456/Items/Latest')) {
+          return http.Response(
+            jsonEncode([
+              {
+                'Id': 'latest-1',
+                'Name': 'Latest movie',
+                'Type': 'Movie',
+                'ProductionYear': 2025,
+                'Overview': 'Overview returned by the Emby API',
+              },
+            ]),
+            200,
+          );
+        }
+        return http.Response('', 404);
+      }),
+    );
+    addTearDown(libraryService.close);
+
+    await tester.pumpWidget(
+      WbsPlayerApp(
+        serverService: serverService,
+        serverRepository: repository,
+        libraryService: libraryService,
+        localePreferenceStore: _FakeLocalePreferenceStore(),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('server-name-7')));
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(mediaRequests.map((request) => request.url.path).toList(), isNotEmpty);
+    expect(
+      mediaRequests.map((request) => request.url.path).toList(),
+      contains('/emby/Users/user-456/Views'),
+    );
+    expect(find.text('无法加载媒体内容，请检查服务器连接或重新登录'), findsNothing);
+    expect(find.text('暂无内容'), findsNothing);
+    expect(find.text('Home Emby'), findsWidgets);
+    expect(find.byKey(const Key('featured-carousel')), findsOneWidget);
+    expect(find.text('Latest movie'), findsWidgets);
+    await tester.drag(
+      find.byKey(const Key('emby-home-scroll')),
+      const Offset(0, -700),
+    );
+    await tester.pump();
+    expect(find.text('继续观看'), findsOneWidget);
+    expect(find.text('Movies'), findsWidgets);
     expect(tester.takeException(), isNull);
   });
 
@@ -260,6 +372,13 @@ class _FakeServerRepository implements ServerRepository {
     _servers.add(saved);
     return saved;
   }
+
+  @override
+  Future<void> updateAuthentication({
+    required int localId,
+    required String accessToken,
+    required String userId,
+  }) async {}
 
   @override
   Future<void> close() async {}

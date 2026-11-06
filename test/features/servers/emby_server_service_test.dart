@@ -57,6 +57,7 @@ void main() {
               jsonEncode({
                 'AccessToken': 'token-abc',
                 'ServerId': 'server-123',
+                'User': {'Id': 'user-456'},
               }),
               200,
             );
@@ -78,6 +79,7 @@ void main() {
         expect(result.username, 'alice');
         expect(result.accessToken, 'token-abc');
         expect(result.serverId, 'server-123');
+        expect(result.userId, 'user-456');
       },
     );
 

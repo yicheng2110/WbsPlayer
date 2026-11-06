@@ -3,6 +3,8 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
+import '../models/emby_server.dart';
+
 /// Communicates with an Emby server for reachability checks and user login.
 class EmbyServerService {
   EmbyServerService({
@@ -19,9 +21,6 @@ class EmbyServerService {
   final Duration requestTimeout;
 
   /// Checks that the provided address responds as an Emby server.
-  ///
-  /// Emby exposes public server metadata at `/emby/System/Info/Public`.
-  /// A successful HTTP response with a server `Id` is required.
   Future<void> checkConnection(String serverAddress) async {
     try {
       final response = await _client
@@ -33,7 +32,6 @@ class EmbyServerService {
       if (response.statusCode != 200) {
         throw const EmbyConnectionException();
       }
-
       final payload = jsonDecode(response.body);
       if (payload is! Map<String, dynamic> ||
           payload['Id'] is! String ||
@@ -51,10 +49,23 @@ class EmbyServerService {
     }
   }
 
+  /// Reauthenticates a stored account and reads its current Emby user ID.
+  Future<EmbyAuthenticationResult> authenticateStoredUser(
+    EmbyServer server,
+  ) async {
+    final authentication = await authenticate(
+      serverAddress: server.address,
+      username: server.username,
+      password: server.password,
+    );
+    if (authentication.serverId != server.serverId ||
+        authentication.userId == null) {
+      throw const EmbyServerRequestException();
+    }
+    return authentication;
+  }
+
   /// Checks whether an access token can read the authenticated system info.
-  ///
-  /// Returns false for rejected tokens, unreachable servers, and server-ID
-  /// mismatches.
   Future<bool> isAccessTokenValid({
     required String serverAddress,
     required String accessToken,
@@ -81,11 +92,7 @@ class EmbyServerService {
     }
   }
 
-  /// Authenticates a user and returns the token and server identity from Emby.
-  ///
-  /// Per Emby's `Users/AuthenticateByName` API, the `Username` and `Pw`
-  /// fields are sent in the JSON request body. The password is not put in the
-  /// URL; it is returned so the caller can persist it after successful login.
+  /// Authenticates a user and returns the token, server ID, and Emby user ID.
   Future<EmbyAuthenticationResult> authenticate({
     required String serverAddress,
     required String username,
@@ -102,7 +109,6 @@ class EmbyServerService {
             body: jsonEncode({'Username': username, 'Pw': password}),
           )
           .timeout(requestTimeout);
-
       if (response.statusCode == 400 ||
           response.statusCode == 401 ||
           response.statusCode == 403) {
@@ -111,7 +117,6 @@ class EmbyServerService {
       if (response.statusCode != 200) {
         throw const EmbyServerRequestException();
       }
-
       final payload = jsonDecode(response.body);
       if (payload is! Map<String, dynamic> ||
           payload['AccessToken'] is! String ||
@@ -120,12 +125,17 @@ class EmbyServerService {
           (payload['ServerId'] as String).isEmpty) {
         throw const EmbyServerRequestException();
       }
-
+      final user = payload['User'];
+      final userId = switch (user) {
+        {'Id': final String id} when id.isNotEmpty => id,
+        _ => null,
+      };
       return EmbyAuthenticationResult(
         username: username,
         password: password,
         accessToken: payload['AccessToken'] as String,
         serverId: payload['ServerId'] as String,
+        userId: userId,
       );
     } on EmbyAuthenticationException {
       rethrow;
@@ -155,7 +165,6 @@ class EmbyServerService {
     final basePath = baseUri.path.replaceFirst(RegExp(r'/+$'), '');
     final apiRoot = basePath.endsWith('/emby') ? basePath : '$basePath/emby';
     final path = '$apiRoot/$apiPath'.replaceFirst(RegExp(r'^/+/'), '/');
-
     return Uri(
       scheme: baseUri.scheme,
       userInfo: baseUri.userInfo,
@@ -173,15 +182,17 @@ class EmbyAuthenticationResult {
     required this.password,
     required this.accessToken,
     required this.serverId,
+    this.userId,
   });
 
   final String username;
   final String password;
   final String accessToken;
   final String serverId;
+  final String? userId;
 }
 
-/// A failure while locating or reaching the Emby server.
+/// A failure while locating or reaching an Emby server.
 class EmbyConnectionException implements Exception {
   const EmbyConnectionException();
 }

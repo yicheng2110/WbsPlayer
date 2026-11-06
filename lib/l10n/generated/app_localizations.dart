@@ -248,6 +248,78 @@ abstract class AppLocalizations {
   /// **'媒体浏览功能后续接入'**
   String get embyMediaBrowsingComingSoon;
 
+  /// No description provided for @homeFeatured.
+  ///
+  /// In zh, this message translates to:
+  /// **'为你推荐'**
+  String get homeFeatured;
+
+  /// No description provided for @homeContinueWatching.
+  ///
+  /// In zh, this message translates to:
+  /// **'继续观看'**
+  String get homeContinueWatching;
+
+  /// No description provided for @homeLibraries.
+  ///
+  /// In zh, this message translates to:
+  /// **'媒体库'**
+  String get homeLibraries;
+
+  /// No description provided for @homeLoading.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在加载媒体库…'**
+  String get homeLoading;
+
+  /// No description provided for @homeLoadFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'无法加载媒体内容，请检查服务器连接或重新登录'**
+  String get homeLoadFailed;
+
+  /// No description provided for @homeRetry.
+  ///
+  /// In zh, this message translates to:
+  /// **'重试'**
+  String get homeRetry;
+
+  /// No description provided for @homeNoItems.
+  ///
+  /// In zh, this message translates to:
+  /// **'暂无内容'**
+  String get homeNoItems;
+
+  /// No description provided for @homeViewAll.
+  ///
+  /// In zh, this message translates to:
+  /// **'查看全部'**
+  String get homeViewAll;
+
+  /// No description provided for @homeOverviewUnavailable.
+  ///
+  /// In zh, this message translates to:
+  /// **'暂无简介'**
+  String get homeOverviewUnavailable;
+
+  /// No description provided for @homeRating.
+  ///
+  /// In zh, this message translates to:
+  /// **'评分 {rating}'**
+  String homeRating(Object rating);
+
+  /// No description provided for @homeServer.
+  ///
+  /// In zh, this message translates to:
+  /// **'服务器：{name}'**
+  String homeServer(Object name);
+
+  /// No description provided for @homeRefreshing.
+  ///
+  /// In zh, this message translates to:
+  /// **'刷新中…'**
+  String get homeRefreshing;
+
   /// No description provided for @serverSaveFailed.
   ///
   /// In zh, this message translates to:

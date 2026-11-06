@@ -12,6 +12,7 @@ class StoredServers extends Table {
   TextColumn get password => text()();
   TextColumn get accessToken => text()();
   TextColumn get serverId => text()();
+  TextColumn get userId => text().nullable()();
 }
 
 /// Persistent database used by the server feature.
@@ -21,5 +22,15 @@ class ServerDatabase extends _$ServerDatabase {
     : super(executor ?? driftDatabase(name: 'wbs_player_servers'));
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+    onCreate: (migrator) => migrator.createAll(),
+    onUpgrade: (migrator, from, to) async {
+      if (from < 2) {
+        await migrator.addColumn(storedServers, storedServers.userId);
+      }
+    },
+  );
 }

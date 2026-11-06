@@ -85,6 +85,46 @@ class AppLocalizationsZh extends AppLocalizations {
   String get embyMediaBrowsingComingSoon => '媒体浏览功能后续接入';
 
   @override
+  String get homeFeatured => '为你推荐';
+
+  @override
+  String get homeContinueWatching => '继续观看';
+
+  @override
+  String get homeLibraries => '媒体库';
+
+  @override
+  String get homeLoading => '正在加载媒体库…';
+
+  @override
+  String get homeLoadFailed => '无法加载媒体内容，请检查服务器连接或重新登录';
+
+  @override
+  String get homeRetry => '重试';
+
+  @override
+  String get homeNoItems => '暂无内容';
+
+  @override
+  String get homeViewAll => '查看全部';
+
+  @override
+  String get homeOverviewUnavailable => '暂无简介';
+
+  @override
+  String homeRating(Object rating) {
+    return '评分 $rating';
+  }
+
+  @override
+  String homeServer(Object name) {
+    return '服务器：$name';
+  }
+
+  @override
+  String get homeRefreshing => '刷新中…';
+
+  @override
   String get serverSaveFailed => '服务器登录成功，但保存失败，请重试';
 
   @override

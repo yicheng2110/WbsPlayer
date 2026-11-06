@@ -129,5 +129,12 @@ class _EmptyServerRepository implements ServerRepository {
   Future<EmbyServer> saveServer(EmbyServer server) async => server;
 
   @override
+  Future<void> updateAuthentication({
+    required int localId,
+    required String accessToken,
+    required String userId,
+  }) async {}
+
+  @override
   Future<void> close() async {}
 }

@@ -27,6 +27,7 @@ void main() {
         password: 'plain-text-password',
         accessToken: 'access-token',
         serverId: 'emby-server-id',
+        userId: 'emby-user-id',
       );
 
       final savedServer = await repository.saveServer(server);
@@ -46,6 +47,15 @@ void main() {
       expect(loadedServers.single.password, 'plain-text-password');
       expect(loadedServers.single.accessToken, 'access-token');
       expect(loadedServers.single.serverId, server.serverId);
+      expect(loadedServers.single.userId, server.userId);
+      await repository.updateAuthentication(
+        localId: savedServer.localId!,
+        accessToken: 'refreshed-token',
+        userId: 'refreshed-user-id',
+      );
+      final updatedServer = (await repository.getAllServers()).single;
+      expect(updatedServer.accessToken, 'refreshed-token');
+      expect(updatedServer.userId, 'refreshed-user-id');
     },
   );
 }

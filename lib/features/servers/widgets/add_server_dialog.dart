@@ -135,6 +135,7 @@ class _AddServerDialogState extends State<AddServerDialog> {
           password: authentication.password,
           accessToken: authentication.accessToken,
           serverId: authentication.serverId,
+          userId: authentication.userId,
         ),
       );
     } on EmbyConnectionException {
