@@ -1,3 +1,15 @@
+typedef EmbyMediaSelected = void Function(
+  EmbyLibraryItem item, {
+  required String userId,
+  required String accessToken,
+});
+
+typedef EmbyLibrarySelected = void Function(
+  EmbyLibrary library, {
+  required String userId,
+  required String accessToken,
+});
+
 class EmbyLibraryItem {
   const EmbyLibraryItem({
     required this.id,

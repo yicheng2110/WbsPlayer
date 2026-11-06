@@ -20,6 +20,16 @@ class EmbyLibraryService {
   final http.Client _client;
   final Duration requestTimeout;
 
+  Future<List<EmbyLibrary>> loadLibraries({
+    required String serverAddress,
+    required String accessToken,
+    required String userId,
+  }) => _loadLibraries(
+    serverAddress: serverAddress,
+    accessToken: accessToken,
+    userId: userId,
+  );
+
   Future<EmbyHomeContent> loadHome({
     required String serverAddress,
     required String accessToken,
@@ -134,6 +144,72 @@ class EmbyLibraryService {
     required Map<String, String> queryParameters,
     required bool queryResult,
   }) async {
+    final payload = await _getPayload(
+      serverAddress: serverAddress,
+      accessToken: accessToken,
+      path: path,
+      queryParameters: queryParameters,
+    );
+    final dynamic rawItems;
+    if (queryResult) {
+      if (payload is! Map<String, dynamic>) {
+        throw const EmbyLibraryRequestException();
+      }
+      rawItems = payload['Items'];
+    } else {
+      rawItems = payload;
+    }
+    if (rawItems is! List) throw const EmbyLibraryRequestException();
+    return _parseItems(rawItems);
+  }
+
+  Future<EmbyLibraryItemPage> loadLibraryItems({
+    required String serverAddress,
+    required String accessToken,
+    required String userId,
+    required String parentId,
+    required EmbyLibrarySort sortBy,
+    required bool ascending,
+    required int startIndex,
+    int limit = 40,
+  }) async {
+    final apiSort = sortBy.apiValue;
+    if (apiSort == null) throw const EmbyLibraryRequestException();
+    final payload = await _getPayload(
+      serverAddress: serverAddress,
+      accessToken: accessToken,
+      path: 'Users/$userId/Items',
+      queryParameters: {
+        'ParentId': parentId,
+        'Recursive': 'true',
+        'EnableTotalRecordCount': 'true',
+        'StartIndex': '$startIndex',
+        'Limit': '$limit',
+        'SortBy': apiSort,
+        'SortOrder': ascending ? 'Ascending' : 'Descending',
+        'Fields': 'ProductionYear,Overview',
+        'EnableImages': 'true',
+        'EnableUserData': 'true',
+        'EnableImageTypes': 'Primary,Thumb,Backdrop',
+      },
+    );
+    if (payload is! Map<String, dynamic> || payload['Items'] is! List) {
+      throw const EmbyLibraryRequestException();
+    }
+    final items = _parseItems(payload['Items'] as List);
+    final rawTotal = payload['TotalRecordCount'];
+    final total = rawTotal is int
+        ? rawTotal
+        : startIndex + items.length + (items.length == limit ? 1 : 0);
+    return EmbyLibraryItemPage(items: items, totalRecordCount: total);
+  }
+
+  Future<dynamic> _getPayload({
+    required String serverAddress,
+    required String accessToken,
+    required String path,
+    required Map<String, String> queryParameters,
+  }) async {
     final uri = _endpoint(
       serverAddress,
       path,
@@ -145,18 +221,7 @@ class EmbyLibraryService {
       if (response.statusCode != 200) {
         throw EmbyLibraryRequestException(response.statusCode);
       }
-      final payload = jsonDecode(response.body);
-      final dynamic rawItems = queryResult
-          ? (payload as Map<String, dynamic>)['Items']
-          : payload;
-      if (rawItems is! List) throw const EmbyLibraryRequestException();
-      return rawItems
-          .whereType<Map>()
-          .map(
-            (item) => EmbyLibraryItem.fromJson(Map<String, dynamic>.from(item)),
-          )
-          .where((item) => item.id.isNotEmpty)
-          .toList(growable: false);
+      return jsonDecode(response.body);
     } on EmbyLibraryRequestException {
       rethrow;
     } on TimeoutException {
@@ -165,6 +230,20 @@ class EmbyLibraryService {
       throw const EmbyLibraryRequestException();
     } on FormatException {
       throw const EmbyLibraryRequestException();
+    } on TypeError {
+      throw const EmbyLibraryRequestException();
+    }
+  }
+
+  List<EmbyLibraryItem> _parseItems(List<dynamic> rawItems) {
+    try {
+      return rawItems
+          .whereType<Map>()
+          .map(
+            (item) => EmbyLibraryItem.fromJson(Map<String, dynamic>.from(item)),
+          )
+          .where((item) => item.id.isNotEmpty)
+          .toList(growable: false);
     } on TypeError {
       throw const EmbyLibraryRequestException();
     }
@@ -204,4 +283,33 @@ class EmbyLibraryRequestException implements Exception {
   const EmbyLibraryRequestException([this.statusCode]);
 
   final int? statusCode;
+}
+
+enum EmbyLibrarySort {
+  dateCreated('DateCreated'),
+  title('SortName'),
+  communityRating('CommunityRating'),
+  criticRating('CriticRating'),
+  productionYear('ProductionYear'),
+  premiereDate('PremiereDate'),
+  officialRating(null),
+  datePlayed('DatePlayed'),
+  runtime('Runtime'),
+  bitrate(null),
+  size(null),
+  random('Random');
+
+  const EmbyLibrarySort(this.apiValue);
+
+  final String? apiValue;
+}
+
+class EmbyLibraryItemPage {
+  const EmbyLibraryItemPage({
+    required this.items,
+    required this.totalRecordCount,
+  });
+
+  final List<EmbyLibraryItem> items;
+  final int totalRecordCount;
 }

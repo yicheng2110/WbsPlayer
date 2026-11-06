@@ -14,11 +14,13 @@ class FeaturedCarousel extends StatefulWidget {
     required this.items,
     required this.server,
     required this.service,
+    this.onMediaSelected,
   });
 
   final List<EmbyLibraryItem> items;
   final EmbyServer server;
   final EmbyLibraryService service;
+  final ValueChanged<EmbyLibraryItem>? onMediaSelected;
 
   @override
   State<FeaturedCarousel> createState() => _FeaturedCarouselState();
@@ -50,41 +52,46 @@ class _FeaturedCarouselState extends State<FeaturedCarousel> {
             onPageChanged: (index) => setState(() => _index = index),
             itemBuilder: (context, index) {
               final item = widget.items[index];
-              return Stack(
-                fit: StackFit.expand,
-                children: [
-                  _MediaImage(
-                    item: item,
-                    server: widget.server,
-                    service: widget.service,
-                    imageType: item.backdropImageTag == null
-                        ? 'Primary'
-                        : 'Backdrop',
-                    maxWidth: 1200,
-                    fit: BoxFit.cover,
-                  ),
-                  const DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Color(0x66000000),
-                          Color(0x00000000),
-                          Color(0xC9000000),
-                          Color(0xE6101211),
-                        ],
-                        stops: [0, 0.25, 0.72, 1],
+              return GestureDetector(
+                onTap: widget.onMediaSelected == null
+                    ? null
+                    : () => widget.onMediaSelected!(item),
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    EmbyPosterImage(
+                      item: item,
+                      server: widget.server,
+                      service: widget.service,
+                      imageType: item.backdropImageTag == null
+                          ? 'Primary'
+                          : 'Backdrop',
+                      maxWidth: 1200,
+                      fit: BoxFit.cover,
+                    ),
+                    const DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Color(0x66000000),
+                            Color(0x00000000),
+                            Color(0xC9000000),
+                            Color(0xE6101211),
+                          ],
+                          stops: [0, 0.25, 0.72, 1],
+                        ),
                       ),
                     ),
-                  ),
-                  Positioned(
-                    left: 22,
-                    right: 22,
-                    bottom: 46,
-                    child: _FeaturedDetails(item: item),
-                  ),
-                ],
+                    Positioned(
+                      left: 22,
+                      right: 22,
+                      bottom: 46,
+                      child: _FeaturedDetails(item: item),
+                    ),
+                  ],
+                ),
               );
             },
           ),
@@ -181,11 +188,13 @@ class ContinueWatchingSection extends StatelessWidget {
     required this.items,
     required this.server,
     required this.service,
+    this.onMediaSelected,
   });
 
   final List<EmbyLibraryItem> items;
   final EmbyServer server;
   final EmbyLibraryService service;
+  final ValueChanged<EmbyLibraryItem>? onMediaSelected;
 
   @override
   Widget build(BuildContext context) => _MediaRail(
@@ -195,6 +204,7 @@ class ContinueWatchingSection extends StatelessWidget {
     service: service,
     landscape: true,
     showProgress: true,
+    onMediaSelected: onMediaSelected,
   );
 }
 
@@ -204,11 +214,15 @@ class LibraryListSection extends StatelessWidget {
     required this.sections,
     required this.server,
     required this.service,
+    this.onLibrarySelected,
+    this.onMediaSelected,
   });
 
   final List<EmbyLibrarySection> sections;
   final EmbyServer server;
   final EmbyLibraryService service;
+  final ValueChanged<EmbyLibrary>? onLibrarySelected;
+  final ValueChanged<EmbyLibraryItem>? onMediaSelected;
 
   @override
   Widget build(BuildContext context) => Column(
@@ -232,6 +246,10 @@ class LibraryListSection extends StatelessWidget {
           items: section.items,
           server: server,
           service: service,
+          onTitleTap: onLibrarySelected == null
+              ? null
+              : () => onLibrarySelected!(section.library),
+          onMediaSelected: onMediaSelected,
         ),
     ],
   );
@@ -246,6 +264,8 @@ class _MediaRail extends StatelessWidget {
     required this.service,
     this.landscape = false,
     this.showProgress = false,
+    this.onTitleTap,
+    this.onMediaSelected,
   });
 
   final String title;
@@ -254,6 +274,8 @@ class _MediaRail extends StatelessWidget {
   final EmbyLibraryService service;
   final bool landscape;
   final bool showProgress;
+  final VoidCallback? onTitleTap;
+  final ValueChanged<EmbyLibraryItem>? onMediaSelected;
 
   @override
   Widget build(BuildContext context) {
@@ -265,22 +287,26 @@ class _MediaRail extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(20, 21, 14, 11),
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: AppColors.mediaInk,
-                    fontSize: 21,
-                    fontWeight: FontWeight.w700,
+          child: InkWell(
+            onTap: onTitleTap,
+            borderRadius: BorderRadius.circular(4),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: AppColors.mediaInk,
+                      fontSize: 21,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
-              ),
-              const Icon(Icons.chevron_right, color: AppColors.mediaMuted),
-            ],
+                const Icon(Icons.chevron_right, color: AppColors.mediaMuted),
+              ],
+            ),
           ),
         ),
         if (items.isEmpty)
@@ -303,70 +329,76 @@ class _MediaRail extends StatelessWidget {
                 final item = items[index];
                 return SizedBox(
                   width: itemWidth,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(11),
-                        child: SizedBox(
-                          width: itemWidth,
-                          height: imageHeight,
-                          child: Stack(
-                            fit: StackFit.expand,
-                            children: [
-                              _MediaImage(
-                                item: item,
-                                server: server,
-                                service: service,
-                                maxWidth: 520,
-                                fit: BoxFit.cover,
-                              ),
-                              if (showProgress)
-                                Positioned(
-                                  left: 0,
-                                  right: 0,
-                                  bottom: 0,
-                                  child: LinearProgressIndicator(
-                                    minHeight: 4,
-                                    value: _progress(item),
-                                    backgroundColor: Colors.white30,
-                                    color: AppColors.mediaAccent,
-                                  ),
+                  child: InkWell(
+                    onTap: onMediaSelected == null
+                        ? null
+                        : () => onMediaSelected!(item),
+                    borderRadius: BorderRadius.circular(4),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(11),
+                          child: SizedBox(
+                            width: itemWidth,
+                            height: imageHeight,
+                            child: Stack(
+                              fit: StackFit.expand,
+                              children: [
+                                EmbyPosterImage(
+                                  item: item,
+                                  server: server,
+                                  service: service,
+                                  maxWidth: 520,
+                                  fit: BoxFit.cover,
                                 ),
-                            ],
+                                if (showProgress)
+                                  Positioned(
+                                    left: 0,
+                                    right: 0,
+                                    bottom: 0,
+                                    child: LinearProgressIndicator(
+                                      minHeight: 4,
+                                      value: _progress(item),
+                                      backgroundColor: Colors.white30,
+                                      color: AppColors.mediaAccent,
+                                    ),
+                                  ),
+                              ],
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 7),
-                      Text(
-                        item.name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: AppColors.mediaInk,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      if (showProgress)
+                        const SizedBox(height: 7),
                         Text(
-                          item.productionYear?.toString() ?? item.type,
+                          item.name,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
-                            color: AppColors.mediaMuted,
-                            fontSize: 12,
-                          ),
-                        )
-                      else if (item.productionYear != null)
-                        Text(
-                          '${item.productionYear}',
-                          style: const TextStyle(
-                            color: AppColors.mediaMuted,
-                            fontSize: 12,
+                            color: AppColors.mediaInk,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
-                    ],
+                        if (showProgress)
+                          Text(
+                            item.productionYear?.toString() ?? item.type,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: AppColors.mediaMuted,
+                              fontSize: 12,
+                            ),
+                          )
+                        else if (item.productionYear != null)
+                          Text(
+                            '${item.productionYear}',
+                            style: const TextStyle(
+                              color: AppColors.mediaMuted,
+                              fontSize: 12,
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
                 );
               },
@@ -384,14 +416,15 @@ class _MediaRail extends StatelessWidget {
   }
 }
 
-class _MediaImage extends StatelessWidget {
-  const _MediaImage({
+class EmbyPosterImage extends StatelessWidget {
+  const EmbyPosterImage({
     required this.item,
     required this.server,
     required this.service,
     required this.maxWidth,
     required this.fit,
     this.imageType = 'Primary',
+    this.accessToken,
   });
 
   final EmbyLibraryItem item;
@@ -400,6 +433,7 @@ class _MediaImage extends StatelessWidget {
   final int maxWidth;
   final BoxFit fit;
   final String imageType;
+  final String? accessToken;
 
   @override
   Widget build(BuildContext context) {
@@ -415,7 +449,7 @@ class _MediaImage extends StatelessWidget {
             maxWidth: maxWidth,
           )
           .toString(),
-      headers: {'X-Emby-Token': server.accessToken},
+      headers: {'X-Emby-Token': accessToken ?? server.accessToken},
       fit: fit,
       filterQuality: FilterQuality.medium,
       frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {

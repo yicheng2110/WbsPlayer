@@ -314,6 +314,372 @@ abstract class AppLocalizations {
   /// **'查看全部'**
   String get homeViewAll;
 
+  /// No description provided for @librarySort.
+  ///
+  /// In zh, this message translates to:
+  /// **'排序方式'**
+  String get librarySort;
+
+  /// No description provided for @librarySortDateAdded.
+  ///
+  /// In zh, this message translates to:
+  /// **'加入日期'**
+  String get librarySortDateAdded;
+
+  /// No description provided for @librarySortTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'标题'**
+  String get librarySortTitle;
+
+  /// No description provided for @librarySortCommunityRating.
+  ///
+  /// In zh, this message translates to:
+  /// **'公众评分'**
+  String get librarySortCommunityRating;
+
+  /// No description provided for @librarySortCriticRating.
+  ///
+  /// In zh, this message translates to:
+  /// **'影评人评分'**
+  String get librarySortCriticRating;
+
+  /// No description provided for @librarySortProductionYear.
+  ///
+  /// In zh, this message translates to:
+  /// **'出品年份'**
+  String get librarySortProductionYear;
+
+  /// No description provided for @librarySortPremiereDate.
+  ///
+  /// In zh, this message translates to:
+  /// **'首映日期'**
+  String get librarySortPremiereDate;
+
+  /// No description provided for @librarySortOfficialRating.
+  ///
+  /// In zh, this message translates to:
+  /// **'官方评级'**
+  String get librarySortOfficialRating;
+
+  /// No description provided for @librarySortDatePlayed.
+  ///
+  /// In zh, this message translates to:
+  /// **'播放日期'**
+  String get librarySortDatePlayed;
+
+  /// No description provided for @librarySortRuntime.
+  ///
+  /// In zh, this message translates to:
+  /// **'播放时长'**
+  String get librarySortRuntime;
+
+  /// No description provided for @librarySortBitrate.
+  ///
+  /// In zh, this message translates to:
+  /// **'比特率'**
+  String get librarySortBitrate;
+
+  /// No description provided for @librarySortSize.
+  ///
+  /// In zh, this message translates to:
+  /// **'大小'**
+  String get librarySortSize;
+
+  /// No description provided for @librarySortRandom.
+  ///
+  /// In zh, this message translates to:
+  /// **'随机'**
+  String get librarySortRandom;
+
+  /// No description provided for @librarySortUnsupported.
+  ///
+  /// In zh, this message translates to:
+  /// **'不支持'**
+  String get librarySortUnsupported;
+
+  /// No description provided for @librarySortAscending.
+  ///
+  /// In zh, this message translates to:
+  /// **'升序'**
+  String get librarySortAscending;
+
+  /// No description provided for @librarySortDescending.
+  ///
+  /// In zh, this message translates to:
+  /// **'降序'**
+  String get librarySortDescending;
+
+  /// No description provided for @mediaDetailRetry.
+  ///
+  /// In zh, this message translates to:
+  /// **'重试'**
+  String get mediaDetailRetry;
+
+  /// No description provided for @mediaDetailLoading.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在加载媒体详情…'**
+  String get mediaDetailLoading;
+
+  /// No description provided for @mediaDetailLoadFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'无法加载媒体详情，请检查服务器连接或重新登录'**
+  String get mediaDetailLoadFailed;
+
+  /// No description provided for @mediaDetailPlaybackFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'播放启动失败'**
+  String get mediaDetailPlaybackFailed;
+
+  /// No description provided for @mediaDetailNoOverview.
+  ///
+  /// In zh, this message translates to:
+  /// **'暂无简介'**
+  String get mediaDetailNoOverview;
+
+  /// No description provided for @mediaDetailPlay.
+  ///
+  /// In zh, this message translates to:
+  /// **'播放'**
+  String get mediaDetailPlay;
+
+  /// No description provided for @mediaDetailPlaybackUnavailable.
+  ///
+  /// In zh, this message translates to:
+  /// **'播放功能尚未接入'**
+  String get mediaDetailPlaybackUnavailable;
+
+  /// No description provided for @mediaDetailNoStreams.
+  ///
+  /// In zh, this message translates to:
+  /// **'没有可用的媒体流信息'**
+  String get mediaDetailNoStreams;
+
+  /// No description provided for @mediaDetailChooseVersion.
+  ///
+  /// In zh, this message translates to:
+  /// **'版本'**
+  String get mediaDetailChooseVersion;
+
+  /// No description provided for @mediaDetailUnknownVersion.
+  ///
+  /// In zh, this message translates to:
+  /// **'未知版本'**
+  String get mediaDetailUnknownVersion;
+
+  /// No description provided for @mediaDetailChooseAudio.
+  ///
+  /// In zh, this message translates to:
+  /// **'音轨'**
+  String get mediaDetailChooseAudio;
+
+  /// No description provided for @mediaDetailUnknownAudio.
+  ///
+  /// In zh, this message translates to:
+  /// **'未知音轨'**
+  String get mediaDetailUnknownAudio;
+
+  /// No description provided for @mediaDetailDurationMinutes.
+  ///
+  /// In zh, this message translates to:
+  /// **'{minutes} 分钟'**
+  String mediaDetailDurationMinutes(Object minutes);
+
+  /// No description provided for @mediaDetailDurationHoursMinutes.
+  ///
+  /// In zh, this message translates to:
+  /// **'{hours} 小时 {minutes} 分钟'**
+  String mediaDetailDurationHoursMinutes(Object hours, Object minutes);
+
+  /// No description provided for @mediaDetailCast.
+  ///
+  /// In zh, this message translates to:
+  /// **'演职人员'**
+  String get mediaDetailCast;
+
+  /// No description provided for @mediaDetailNoPeople.
+  ///
+  /// In zh, this message translates to:
+  /// **'暂无演职人员信息'**
+  String get mediaDetailNoPeople;
+
+  /// No description provided for @mediaDetailDirector.
+  ///
+  /// In zh, this message translates to:
+  /// **'导演'**
+  String get mediaDetailDirector;
+
+  /// No description provided for @mediaDetailWriter.
+  ///
+  /// In zh, this message translates to:
+  /// **'编剧'**
+  String get mediaDetailWriter;
+
+  /// No description provided for @mediaDetailCrew.
+  ///
+  /// In zh, this message translates to:
+  /// **'制作人员'**
+  String get mediaDetailCrew;
+
+  /// No description provided for @mediaDetailPhotos.
+  ///
+  /// In zh, this message translates to:
+  /// **'相册'**
+  String get mediaDetailPhotos;
+
+  /// No description provided for @mediaDetailNoImages.
+  ///
+  /// In zh, this message translates to:
+  /// **'暂无图片'**
+  String get mediaDetailNoImages;
+
+  /// No description provided for @mediaDetailSimilar.
+  ///
+  /// In zh, this message translates to:
+  /// **'更多类似'**
+  String get mediaDetailSimilar;
+
+  /// No description provided for @mediaDetailNoSimilar.
+  ///
+  /// In zh, this message translates to:
+  /// **'暂无类似内容'**
+  String get mediaDetailNoSimilar;
+
+  /// No description provided for @mediaDetailStudios.
+  ///
+  /// In zh, this message translates to:
+  /// **'工作室'**
+  String get mediaDetailStudios;
+
+  /// No description provided for @mediaDetailNoStudio.
+  ///
+  /// In zh, this message translates to:
+  /// **'暂无工作室信息'**
+  String get mediaDetailNoStudio;
+
+  /// No description provided for @mediaDetailExternalLinks.
+  ///
+  /// In zh, this message translates to:
+  /// **'外部链接'**
+  String get mediaDetailExternalLinks;
+
+  /// No description provided for @mediaDetailNoExternalLinks.
+  ///
+  /// In zh, this message translates to:
+  /// **'暂无外部链接'**
+  String get mediaDetailNoExternalLinks;
+
+  /// No description provided for @mediaDetailTechnicalInfo.
+  ///
+  /// In zh, this message translates to:
+  /// **'媒体信息'**
+  String get mediaDetailTechnicalInfo;
+
+  /// No description provided for @mediaDetailVersion.
+  ///
+  /// In zh, this message translates to:
+  /// **'版本'**
+  String get mediaDetailVersion;
+
+  /// No description provided for @mediaDetailTechContainer.
+  ///
+  /// In zh, this message translates to:
+  /// **'封装'**
+  String get mediaDetailTechContainer;
+
+  /// No description provided for @mediaDetailTechSize.
+  ///
+  /// In zh, this message translates to:
+  /// **'大小'**
+  String get mediaDetailTechSize;
+
+  /// No description provided for @mediaDetailTechBitrate.
+  ///
+  /// In zh, this message translates to:
+  /// **'比特率'**
+  String get mediaDetailTechBitrate;
+
+  /// No description provided for @mediaDetailTechVideo.
+  ///
+  /// In zh, this message translates to:
+  /// **'视频'**
+  String get mediaDetailTechVideo;
+
+  /// No description provided for @mediaDetailTechAudio.
+  ///
+  /// In zh, this message translates to:
+  /// **'音频'**
+  String get mediaDetailTechAudio;
+
+  /// No description provided for @mediaDetailResolution.
+  ///
+  /// In zh, this message translates to:
+  /// **'分辨率'**
+  String get mediaDetailResolution;
+
+  /// No description provided for @mediaDetailFrameRate.
+  ///
+  /// In zh, this message translates to:
+  /// **'帧率'**
+  String get mediaDetailFrameRate;
+
+  /// No description provided for @mediaDetailVideoRange.
+  ///
+  /// In zh, this message translates to:
+  /// **'动态范围'**
+  String get mediaDetailVideoRange;
+
+  /// No description provided for @mediaDetailColorSpace.
+  ///
+  /// In zh, this message translates to:
+  /// **'色彩空间'**
+  String get mediaDetailColorSpace;
+
+  /// No description provided for @mediaDetailColorTransfer.
+  ///
+  /// In zh, this message translates to:
+  /// **'色彩转换'**
+  String get mediaDetailColorTransfer;
+
+  /// No description provided for @mediaDetailStreamDefault.
+  ///
+  /// In zh, this message translates to:
+  /// **'默认'**
+  String get mediaDetailStreamDefault;
+
+  /// No description provided for @mediaDetailStreamForced.
+  ///
+  /// In zh, this message translates to:
+  /// **'强制'**
+  String get mediaDetailStreamForced;
+
+  /// No description provided for @mediaDetailStreamExternal.
+  ///
+  /// In zh, this message translates to:
+  /// **'外部'**
+  String get mediaDetailStreamExternal;
+
+  /// No description provided for @mediaDetailAddFavorite.
+  ///
+  /// In zh, this message translates to:
+  /// **'添加收藏'**
+  String get mediaDetailAddFavorite;
+
+  /// No description provided for @mediaDetailRemoveFavorite.
+  ///
+  /// In zh, this message translates to:
+  /// **'取消收藏'**
+  String get mediaDetailRemoveFavorite;
+
+  /// No description provided for @mediaDetailFavoriteFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'收藏状态更新失败'**
+  String get mediaDetailFavoriteFailed;
+
   /// No description provided for @homeOverviewUnavailable.
   ///
   /// In zh, this message translates to:

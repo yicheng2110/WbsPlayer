@@ -124,6 +124,194 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeViewAll => 'View all';
 
   @override
+  String get librarySort => 'Sort by';
+
+  @override
+  String get librarySortDateAdded => 'Date added';
+
+  @override
+  String get librarySortTitle => 'Title';
+
+  @override
+  String get librarySortCommunityRating => 'Community rating';
+
+  @override
+  String get librarySortCriticRating => 'Critic rating';
+
+  @override
+  String get librarySortProductionYear => 'Production year';
+
+  @override
+  String get librarySortPremiereDate => 'Premiere date';
+
+  @override
+  String get librarySortOfficialRating => 'Official rating';
+
+  @override
+  String get librarySortDatePlayed => 'Date played';
+
+  @override
+  String get librarySortRuntime => 'Runtime';
+
+  @override
+  String get librarySortBitrate => 'Bitrate';
+
+  @override
+  String get librarySortSize => 'Size';
+
+  @override
+  String get librarySortRandom => 'Random';
+
+  @override
+  String get librarySortUnsupported => 'Unsupported';
+
+  @override
+  String get librarySortAscending => 'Ascending';
+
+  @override
+  String get librarySortDescending => 'Descending';
+
+  @override
+  String get mediaDetailRetry => 'Retry';
+
+  @override
+  String get mediaDetailLoading => 'Loading media details…';
+
+  @override
+  String get mediaDetailLoadFailed =>
+      'Could not load media details. Check the server connection or sign in again.';
+
+  @override
+  String get mediaDetailPlaybackFailed => 'Could not start playback.';
+
+  @override
+  String get mediaDetailNoOverview => 'No overview available';
+
+  @override
+  String get mediaDetailPlay => 'Play';
+
+  @override
+  String get mediaDetailPlaybackUnavailable => 'Playback is not connected yet';
+
+  @override
+  String get mediaDetailNoStreams => 'No media stream information available';
+
+  @override
+  String get mediaDetailChooseVersion => 'Version';
+
+  @override
+  String get mediaDetailUnknownVersion => 'Unknown version';
+
+  @override
+  String get mediaDetailChooseAudio => 'Audio';
+
+  @override
+  String get mediaDetailUnknownAudio => 'Unknown audio track';
+
+  @override
+  String mediaDetailDurationMinutes(Object minutes) {
+    return '$minutes min';
+  }
+
+  @override
+  String mediaDetailDurationHoursMinutes(Object hours, Object minutes) {
+    return '$hours hr $minutes min';
+  }
+
+  @override
+  String get mediaDetailCast => 'Cast and crew';
+
+  @override
+  String get mediaDetailNoPeople => 'No cast information available';
+
+  @override
+  String get mediaDetailDirector => 'Director';
+
+  @override
+  String get mediaDetailWriter => 'Writer';
+
+  @override
+  String get mediaDetailCrew => 'Crew';
+
+  @override
+  String get mediaDetailPhotos => 'Photos';
+
+  @override
+  String get mediaDetailNoImages => 'No images available';
+
+  @override
+  String get mediaDetailSimilar => 'More like this';
+
+  @override
+  String get mediaDetailNoSimilar => 'No similar items available';
+
+  @override
+  String get mediaDetailStudios => 'Studios';
+
+  @override
+  String get mediaDetailNoStudio => 'No studio information available';
+
+  @override
+  String get mediaDetailExternalLinks => 'External links';
+
+  @override
+  String get mediaDetailNoExternalLinks => 'No external links available';
+
+  @override
+  String get mediaDetailTechnicalInfo => 'Media information';
+
+  @override
+  String get mediaDetailVersion => 'Version';
+
+  @override
+  String get mediaDetailTechContainer => 'Container';
+
+  @override
+  String get mediaDetailTechSize => 'Size';
+
+  @override
+  String get mediaDetailTechBitrate => 'Bitrate';
+
+  @override
+  String get mediaDetailTechVideo => 'Video';
+
+  @override
+  String get mediaDetailTechAudio => 'Audio';
+
+  @override
+  String get mediaDetailResolution => 'Resolution';
+
+  @override
+  String get mediaDetailFrameRate => 'Frame rate';
+
+  @override
+  String get mediaDetailVideoRange => 'Dynamic range';
+
+  @override
+  String get mediaDetailColorSpace => 'Color space';
+
+  @override
+  String get mediaDetailColorTransfer => 'Color transfer';
+
+  @override
+  String get mediaDetailStreamDefault => 'Default';
+
+  @override
+  String get mediaDetailStreamForced => 'Forced';
+
+  @override
+  String get mediaDetailStreamExternal => 'External';
+
+  @override
+  String get mediaDetailAddFavorite => 'Add to favorites';
+
+  @override
+  String get mediaDetailRemoveFavorite => 'Remove from favorites';
+
+  @override
+  String get mediaDetailFavoriteFailed => 'Could not update favorite status.';
+
+  @override
   String get homeOverviewUnavailable => 'No overview available';
 
   @override

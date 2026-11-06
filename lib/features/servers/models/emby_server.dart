@@ -19,14 +19,15 @@ class EmbyServer {
   final String serverId;
   final String? userId;
 
-  EmbyServer copyWith({int? localId, String? userId}) => EmbyServer(
-    localId: localId ?? this.localId,
-    name: name,
-    address: address,
-    username: username,
-    password: password,
-    accessToken: accessToken,
-    serverId: serverId,
-    userId: userId ?? this.userId,
-  );
+  EmbyServer copyWith({int? localId, String? userId, String? accessToken}) =>
+      EmbyServer(
+        localId: localId ?? this.localId,
+        name: name,
+        address: address,
+        username: username,
+        password: password,
+        accessToken: accessToken ?? this.accessToken,
+        serverId: serverId,
+        userId: userId ?? this.userId,
+      );
 }

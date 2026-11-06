@@ -9,6 +9,7 @@ import '../repositories/server_repository.dart';
 import '../services/emby_library_service.dart';
 import '../services/emby_server_service.dart';
 import '../widgets/emby_home_sections.dart';
+import 'emby_library_page.dart';
 
 class EmbyHomePage extends StatefulWidget {
   const EmbyHomePage({
@@ -17,12 +18,16 @@ class EmbyHomePage extends StatefulWidget {
     this.serverService,
     this.serverRepository,
     this.libraryService,
+    this.onLibrarySelected,
+    this.onMediaSelected,
   });
 
   final EmbyServer server;
   final EmbyServerService? serverService;
   final ServerRepository? serverRepository;
   final EmbyLibraryService? libraryService;
+  final EmbyLibrarySelected? onLibrarySelected;
+  final EmbyMediaSelected? onMediaSelected;
 
   @override
   State<EmbyHomePage> createState() => _EmbyHomePageState();
@@ -37,6 +42,8 @@ class _EmbyHomePageState extends State<EmbyHomePage> {
   late final bool _ownsLibraryService = widget.libraryService == null;
 
   EmbyHomeContent? _content;
+  String? _contentUserId;
+  String? _contentAccessToken;
   Object? _error;
   bool _isLoading = true;
   int _requestId = 0;
@@ -79,6 +86,8 @@ class _EmbyHomePageState extends State<EmbyHomePage> {
           );
         }
       }
+      _contentUserId = userId;
+      _contentAccessToken = accessToken;
       final content = await _loadHomeWithToken(
         userId: userId,
         accessToken: accessToken,
@@ -113,6 +122,8 @@ class _EmbyHomePageState extends State<EmbyHomePage> {
         widget.server,
       );
       final refreshedUserId = authentication.userId!;
+      _contentUserId = refreshedUserId;
+      _contentAccessToken = authentication.accessToken;
       final localId = widget.server.localId;
       final repository = widget.serverRepository;
       if (localId != null && repository != null) {
@@ -128,6 +139,44 @@ class _EmbyHomePageState extends State<EmbyHomePage> {
         userId: refreshedUserId,
       );
     }
+  }
+
+  void _openLibrary(EmbyLibrary library) {
+    final userId = _contentUserId ?? '';
+    final accessToken = _contentAccessToken ?? widget.server.accessToken;
+    final callback = widget.onLibrarySelected;
+    if (callback != null) {
+      callback(library, userId: userId, accessToken: accessToken);
+      return;
+    }
+    Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        builder: (_) => EmbyLibraryPage(
+          library: library,
+          server: widget.server.copyWith(
+            userId: userId,
+            accessToken: accessToken,
+          ),
+          serverService: _serverService,
+          serverRepository: widget.serverRepository,
+          libraryService: _libraryService,
+          onMediaSelected: widget.onMediaSelected,
+        ),
+      ),
+    );
+  }
+
+  EmbyServer get _activeServer => widget.server.copyWith(
+    userId: _contentUserId,
+    accessToken: _contentAccessToken,
+  );
+
+  void _selectMedia(EmbyLibraryItem item) {
+    widget.onMediaSelected?.call(
+      item,
+      userId: _contentUserId ?? '',
+      accessToken: _contentAccessToken ?? widget.server.accessToken,
+    );
   }
 
   @override
@@ -204,8 +253,9 @@ class _EmbyHomePageState extends State<EmbyHomePage> {
               SliverToBoxAdapter(
                 child: FeaturedCarousel(
                   items: content.featured,
-                  server: widget.server,
+                  server: _activeServer,
                   service: _libraryService,
+                  onMediaSelected: _selectMedia,
                 ),
               ),
             if (_isLoading)
@@ -220,16 +270,19 @@ class _EmbyHomePageState extends State<EmbyHomePage> {
               SliverToBoxAdapter(
                 child: ContinueWatchingSection(
                   items: content.recentlyPlayed,
-                  server: widget.server,
+                  server: _activeServer,
                   service: _libraryService,
+                  onMediaSelected: _selectMedia,
                 ),
               ),
             if (content != null && content.libraries.isNotEmpty)
               SliverToBoxAdapter(
                 child: LibraryListSection(
                   sections: content.libraries,
-                  server: widget.server,
+                  server: _activeServer,
                   service: _libraryService,
+                  onLibrarySelected: _openLibrary,
+                  onMediaSelected: _selectMedia,
                 ),
               ),
           ],
