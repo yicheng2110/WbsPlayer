@@ -301,6 +301,103 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('edits a saved server and persists the updated details', (
+    tester,
+  ) async {
+    tester.binding.platformDispatcher.localeTestValue = const Locale(
+      'zh',
+      'CN',
+    );
+    addTearDown(tester.binding.platformDispatcher.clearLocaleTestValue);
+    const server = EmbyServer(
+      localId: 7,
+      name: 'Old server',
+      address: 'http://old.test:8096',
+      username: 'alice',
+      password: 'old-password',
+      accessToken: 'old-token',
+      serverId: 'server-123',
+    );
+    final repository = _FakeServerRepository(servers: [server]);
+    addTearDown(repository.close);
+    final requests = <http.Request>[];
+    final service = EmbyServerService(
+      client: MockClient((request) async {
+        requests.add(request);
+        if (request.url.path.endsWith('/System/Info/Public')) {
+          return http.Response(jsonEncode({'Id': 'server-123'}), 200);
+        }
+        if (request.url.path.endsWith('/Users/AuthenticateByName')) {
+          return http.Response(
+            jsonEncode({
+              'AccessToken': 'new-token',
+              'ServerId': 'server-123',
+              'User': {'Id': 'user-456'},
+            }),
+            200,
+          );
+        }
+        if (request.url.path.endsWith('/System/Info')) {
+          return http.Response(jsonEncode({'Id': 'server-123'}), 200);
+        }
+        return http.Response('', 404);
+      }),
+    );
+    addTearDown(service.close);
+
+    await tester.pumpWidget(
+      WbsPlayerApp(
+        serverRepository: repository,
+        serverService: service,
+        localePreferenceStore: _FakeLocalePreferenceStore(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('edit-server-7')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('edit-server-dialog')), findsOneWidget);
+    expect(find.text('Old server'), findsWidgets);
+    expect(find.text('http://old.test:8096'), findsWidgets);
+
+    await tester.enterText(
+      find.byKey(const Key('edit-server-name-field')),
+      'New server',
+    );
+    await tester.enterText(
+      find.byKey(const Key('edit-server-address-field')),
+      'http://new.test:8096',
+    );
+    await tester.enterText(
+      find.byKey(const Key('edit-server-username-field')),
+      'bob',
+    );
+    await tester.enterText(
+      find.byKey(const Key('edit-server-password-field')),
+      'new-password',
+    );
+    await tester.tap(find.byKey(const Key('confirm-edit-server')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pumpAndSettle();
+
+    final updatedServer = (await repository.getAllServers()).single;
+    expect(updatedServer.localId, 7);
+    expect(updatedServer.name, 'New server');
+    expect(updatedServer.address, 'http://new.test:8096');
+    expect(updatedServer.username, 'bob');
+    expect(updatedServer.password, 'new-password');
+    expect(updatedServer.accessToken, 'new-token');
+    expect(updatedServer.userId, 'user-456');
+    expect(find.text('New server'), findsOneWidget);
+    expect(find.text('http://new.test:8096'), findsOneWidget);
+    expect(
+      requests.map((request) => request.url.path),
+      contains('/emby/Users/AuthenticateByName'),
+    );
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('marks saved servers maroon when token probe fails', (
     tester,
   ) async {
@@ -379,6 +476,14 @@ class _FakeServerRepository implements ServerRepository {
     final saved = server.copyWith(localId: _nextId++);
     _servers.add(saved);
     return saved;
+  }
+
+  @override
+  Future<void> updateServer(EmbyServer server) async {
+    final index = _servers.indexWhere(
+      (saved) => saved.localId == server.localId,
+    );
+    if (index != -1) _servers[index] = server;
   }
 
   @override

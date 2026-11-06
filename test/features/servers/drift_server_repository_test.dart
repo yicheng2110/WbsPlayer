@@ -58,4 +58,49 @@ void main() {
       expect(updatedServer.userId, 'refreshed-user-id');
     },
   );
+
+  test('persists all updated server details by local ID', () async {
+    final tempDirectory = await Directory.systemTemp.createTemp('wbs-player-');
+    addTearDown(() => tempDirectory.delete(recursive: true));
+    final databaseFile = File(p.join(tempDirectory.path, 'servers.sqlite'));
+
+    var database = ServerDatabase(NativeDatabase(databaseFile));
+    var repository = DriftServerRepository(database: database);
+    const server = EmbyServer(
+      name: 'Home Emby',
+      address: 'http://emby.test:8096',
+      username: 'alice',
+      password: 'old-password',
+      accessToken: 'old-token',
+      serverId: 'old-server-id',
+      userId: 'old-user-id',
+    );
+
+    final savedServer = await repository.saveServer(server);
+    final updatedServer = EmbyServer(
+      localId: savedServer.localId,
+      name: 'Updated Emby',
+      address: 'https://emby.example:8920',
+      username: 'bob',
+      password: 'new-password',
+      accessToken: 'new-token',
+      serverId: 'new-server-id',
+    );
+    await repository.updateServer(updatedServer);
+    await database.close();
+
+    database = ServerDatabase(NativeDatabase(databaseFile));
+    repository = DriftServerRepository(database: database);
+    addTearDown(database.close);
+    final loadedServer = (await repository.getAllServers()).single;
+
+    expect(loadedServer.localId, savedServer.localId);
+    expect(loadedServer.name, updatedServer.name);
+    expect(loadedServer.address, updatedServer.address);
+    expect(loadedServer.username, updatedServer.username);
+    expect(loadedServer.password, updatedServer.password);
+    expect(loadedServer.accessToken, updatedServer.accessToken);
+    expect(loadedServer.serverId, updatedServer.serverId);
+    expect(loadedServer.userId, isNull);
+  });
 }

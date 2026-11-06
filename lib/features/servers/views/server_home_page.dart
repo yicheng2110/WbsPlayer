@@ -10,6 +10,7 @@ import '../repositories/drift_server_repository.dart';
 import '../repositories/server_repository.dart';
 import '../services/emby_server_service.dart';
 import '../widgets/add_server_dialog.dart';
+import '../widgets/edit_server_dialog.dart';
 import '../widgets/empty_server_state.dart';
 import '../widgets/emby_server_card.dart';
 import '../widgets/server_navigation_pill.dart';
@@ -85,6 +86,40 @@ class _ServerHomePageState extends State<ServerHomePage> {
       if (!mounted) return;
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text(context.l10n.serverSaveFailed)));
+    }
+  }
+
+  Future<void> _editServer(EmbyServer server) async {
+    if (_isLoading) return;
+    final updatedServer = await showDialog<EmbyServer>(
+      context: context,
+      builder: (context) =>
+          EditServerDialog(server: server, serverService: _serverService),
+    );
+    if (updatedServer == null || !mounted) return;
+    try {
+      await _serverRepository.updateServer(updatedServer);
+      if (!mounted) return;
+      setState(() {
+        final index = _servers.indexWhere(
+          (savedServer) => savedServer.localId == updatedServer.localId,
+        );
+        if (index != -1) _servers[index] = updatedServer;
+        if (updatedServer.localId case final id?) _tokenValidity.remove(id);
+      });
+      final isValid = await _serverService.isAccessTokenValid(
+        serverAddress: updatedServer.address,
+        accessToken: updatedServer.accessToken,
+        serverId: updatedServer.serverId,
+      );
+      if (!mounted) return;
+      if (updatedServer.localId case final id?) {
+        setState(() => _tokenValidity[id] = isValid);
+      }
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(context.l10n.serverEditFailed)));
     }
   }
 
@@ -224,6 +259,7 @@ class _ServerHomePageState extends State<ServerHomePage> {
               server: server,
               tokenValid: id == null ? null : _tokenValidity[id],
               onTap: () => widget.onServerSelected(server),
+              onEdit: () => _editServer(server),
             );
           },
         ),

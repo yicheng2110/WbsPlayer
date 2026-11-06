@@ -25,6 +25,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get addServer => '添加服务器';
 
   @override
+  String get editServer => '修改服务器';
+
+  @override
+  String get save => '保存';
+
+  @override
+  String get serverEditFailed => '服务器信息更新失败，请重试';
+
+  @override
   String get serverName => '服务器名称';
 
   @override

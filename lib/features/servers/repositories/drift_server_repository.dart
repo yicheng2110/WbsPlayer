@@ -51,6 +51,28 @@ class DriftServerRepository implements ServerRepository {
   }
 
   @override
+  Future<void> updateServer(EmbyServer server) async {
+    final localId = server.localId;
+    if (localId == null) {
+      throw ArgumentError.value(localId, 'server.localId', 'must not be null');
+    }
+
+    await (_database.update(
+      _database.storedServers,
+    )..where((row) => row.id.equals(localId))).write(
+      StoredServersCompanion(
+        name: Value(server.name),
+        address: Value(server.address),
+        username: Value(server.username),
+        password: Value(server.password),
+        accessToken: Value(server.accessToken),
+        serverId: Value(server.serverId),
+        userId: Value(server.userId),
+      ),
+    );
+  }
+
+  @override
   Future<void> updateAuthentication({
     required int localId,
     required String accessToken,

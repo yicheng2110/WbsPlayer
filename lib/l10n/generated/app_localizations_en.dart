@@ -25,6 +25,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addServer => 'Add server';
 
   @override
+  String get editServer => 'Edit server';
+
+  @override
+  String get save => 'Save';
+
+  @override
+  String get serverEditFailed =>
+      'Failed to update the server. Please try again.';
+
+  @override
   String get serverName => 'Server name';
 
   @override

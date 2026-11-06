@@ -10,11 +10,13 @@ class EmbyServerCard extends StatelessWidget {
     required this.server,
     this.tokenValid,
     this.onTap,
+    this.onEdit,
   });
 
   final EmbyServer server;
   final bool? tokenValid;
   final VoidCallback? onTap;
+  final VoidCallback? onEdit;
 
   @override
   Widget build(BuildContext context) {
@@ -56,7 +58,18 @@ class EmbyServerCard extends StatelessWidget {
             ),
           ),
         ),
-        trailing: const Icon(Icons.chevron_right),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              key: ValueKey('edit-server-${server.localId ?? server.address}'),
+              tooltip: context.l10n.editServer,
+              onPressed: onEdit,
+              icon: const Icon(Icons.edit_outlined),
+            ),
+            const Icon(Icons.chevron_right),
+          ],
+        ),
         onTap: onTap,
       ),
     );

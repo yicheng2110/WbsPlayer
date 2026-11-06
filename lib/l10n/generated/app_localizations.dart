@@ -128,6 +128,24 @@ abstract class AppLocalizations {
   /// **'添加服务器'**
   String get addServer;
 
+  /// No description provided for @editServer.
+  ///
+  /// In zh, this message translates to:
+  /// **'修改服务器'**
+  String get editServer;
+
+  /// No description provided for @save.
+  ///
+  /// In zh, this message translates to:
+  /// **'保存'**
+  String get save;
+
+  /// No description provided for @serverEditFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'服务器信息更新失败，请重试'**
+  String get serverEditFailed;
+
   /// No description provided for @serverName.
   ///
   /// In zh, this message translates to:
