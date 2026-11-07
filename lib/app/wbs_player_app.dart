@@ -412,7 +412,7 @@ class _WbsPlayerAppState extends State<WbsPlayerApp> {
                                       )
                                     : null,
                                 onNextEpisode: (next) =>
-                                    context.pushReplacement<void>(
+                                    context.pushReplacement(
                                       '$serverPath/play/${Uri.encodeComponent(next.itemId)}',
                                       extra: next,
                                     ),
@@ -545,7 +545,7 @@ class _WbsPlayerAppState extends State<WbsPlayerApp> {
                 current: detail,
               )
             : null,
-        onNextEpisode: (next) => context.pushReplacement<void>(
+        onNextEpisode: (next) => context.pushReplacement(
           '$serverPath/play/${Uri.encodeComponent(next.itemId)}',
           extra: next,
         ),
@@ -601,7 +601,7 @@ class _WbsPlayerAppState extends State<WbsPlayerApp> {
           userId: userId,
           current: episode,
         ),
-        onNextEpisode: (next) => context.pushReplacement<void>(
+        onNextEpisode: (next) => context.pushReplacement(
           '$serverPath/play/${Uri.encodeComponent(next.itemId)}',
           extra: next,
         ),

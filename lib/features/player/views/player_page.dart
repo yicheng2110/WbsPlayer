@@ -2,12 +2,14 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:screen_brightness/screen_brightness.dart';
 
 import '../../servers/models/emby_media_detail.dart';
 import '../models/player_preferences.dart';
+import '../models/player_session_state.dart';
 import '../services/emby_playback_reporter.dart';
 import '../services/emby_playback_service.dart';
 import '../services/playback_engine.dart';
@@ -421,7 +423,7 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
             0,
             currentPath.lastIndexOf('/play/'),
           );
-          context.pushReplacement<void>(
+          context.pushReplacement(
             '$prefix/play/${Uri.encodeComponent(next.itemId)}',
             extra: next,
           );
