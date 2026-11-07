@@ -710,6 +710,252 @@ abstract class AppLocalizations {
   /// **'收藏状态更新失败'**
   String get mediaDetailFavoriteFailed;
 
+  /// No description provided for @playerBack.
+  ///
+  /// In zh, this message translates to:
+  /// **'返回'**
+  String get playerBack;
+
+  /// No description provided for @playerTracks.
+  ///
+  /// In zh, this message translates to:
+  /// **'音轨与字幕'**
+  String get playerTracks;
+
+  /// No description provided for @playerAudio.
+  ///
+  /// In zh, this message translates to:
+  /// **'音轨'**
+  String get playerAudio;
+
+  /// No description provided for @playerSubtitles.
+  ///
+  /// In zh, this message translates to:
+  /// **'字幕'**
+  String get playerSubtitles;
+
+  /// No description provided for @playerSubtitlesOff.
+  ///
+  /// In zh, this message translates to:
+  /// **'关闭'**
+  String get playerSubtitlesOff;
+
+  /// No description provided for @playerSpeed.
+  ///
+  /// In zh, this message translates to:
+  /// **'播放速度'**
+  String get playerSpeed;
+
+  /// No description provided for @playerSeek.
+  ///
+  /// In zh, this message translates to:
+  /// **'进度'**
+  String get playerSeek;
+
+  /// No description provided for @playerBrightness.
+  ///
+  /// In zh, this message translates to:
+  /// **'亮度'**
+  String get playerBrightness;
+
+  /// No description provided for @playerVolume.
+  ///
+  /// In zh, this message translates to:
+  /// **'音量'**
+  String get playerVolume;
+
+  /// No description provided for @playerPlay.
+  ///
+  /// In zh, this message translates to:
+  /// **'播放'**
+  String get playerPlay;
+
+  /// No description provided for @playerPause.
+  ///
+  /// In zh, this message translates to:
+  /// **'暂停'**
+  String get playerPause;
+
+  /// No description provided for @playerBack10.
+  ///
+  /// In zh, this message translates to:
+  /// **'后退 10 秒'**
+  String get playerBack10;
+
+  /// No description provided for @playerForward10.
+  ///
+  /// In zh, this message translates to:
+  /// **'前进 10 秒'**
+  String get playerForward10;
+
+  /// No description provided for @playerRetry.
+  ///
+  /// In zh, this message translates to:
+  /// **'重试'**
+  String get playerRetry;
+
+  /// No description provided for @playerPlaybackFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'播放失败'**
+  String get playerPlaybackFailed;
+
+  /// No description provided for @playerQuality.
+  ///
+  /// In zh, this message translates to:
+  /// **'播放画质'**
+  String get playerQuality;
+
+  /// No description provided for @playerQualityOriginal.
+  ///
+  /// In zh, this message translates to:
+  /// **'原画'**
+  String get playerQualityOriginal;
+
+  /// No description provided for @playerQualityLimit.
+  ///
+  /// In zh, this message translates to:
+  /// **'限制码率'**
+  String get playerQualityLimit;
+
+  /// No description provided for @playerSubtitleLanguage.
+  ///
+  /// In zh, this message translates to:
+  /// **'默认字幕语言'**
+  String get playerSubtitleLanguage;
+
+  /// No description provided for @playerSubtitleSize.
+  ///
+  /// In zh, this message translates to:
+  /// **'字幕字号'**
+  String get playerSubtitleSize;
+
+  /// No description provided for @playerAudioPassthrough.
+  ///
+  /// In zh, this message translates to:
+  /// **'音频直通'**
+  String get playerAudioPassthrough;
+
+  /// No description provided for @playerHardwareAcceleration.
+  ///
+  /// In zh, this message translates to:
+  /// **'硬件解码'**
+  String get playerHardwareAcceleration;
+
+  /// No description provided for @playerNextEpisode.
+  ///
+  /// In zh, this message translates to:
+  /// **'下一集'**
+  String get playerNextEpisode;
+
+  /// No description provided for @playerStats.
+  ///
+  /// In zh, this message translates to:
+  /// **'播放统计'**
+  String get playerStats;
+
+  /// No description provided for @playerExternalSubtitles.
+  ///
+  /// In zh, this message translates to:
+  /// **'外挂字幕'**
+  String get playerExternalSubtitles;
+
+  /// No description provided for @playerRetrying.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在重试播放…'**
+  String get playerRetrying;
+
+  /// No description provided for @playerMute.
+  ///
+  /// In zh, this message translates to:
+  /// **'静音'**
+  String get playerMute;
+
+  /// No description provided for @playerSubtitleJapanese.
+  ///
+  /// In zh, this message translates to:
+  /// **'日语'**
+  String get playerSubtitleJapanese;
+
+  /// No description provided for @playerNoPlayableUrl.
+  ///
+  /// In zh, this message translates to:
+  /// **'此媒体版本没有可用的直连地址。'**
+  String get playerNoPlayableUrl;
+
+  /// No description provided for @playerInvalidPlaybackUrl.
+  ///
+  /// In zh, this message translates to:
+  /// **'服务器返回了无效的播放地址。'**
+  String get playerInvalidPlaybackUrl;
+
+  /// No description provided for @playerNetworkError.
+  ///
+  /// In zh, this message translates to:
+  /// **'无法连接媒体服务器。'**
+  String get playerNetworkError;
+
+  /// No description provided for @playerPlaybackTimeout.
+  ///
+  /// In zh, this message translates to:
+  /// **'媒体服务器响应超时，请重试。'**
+  String get playerPlaybackTimeout;
+
+  /// No description provided for @playerRequestFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'媒体服务器拒绝了播放请求。'**
+  String get playerRequestFailed;
+
+  /// No description provided for @playerSubtitleUnsupported.
+  ///
+  /// In zh, this message translates to:
+  /// **'暂不支持此字幕格式。'**
+  String get playerSubtitleUnsupported;
+
+  /// No description provided for @playerInvalidPlaybackResponse.
+  ///
+  /// In zh, this message translates to:
+  /// **'媒体服务器返回了无效响应。'**
+  String get playerInvalidPlaybackResponse;
+
+  /// No description provided for @playerStatsVideo.
+  ///
+  /// In zh, this message translates to:
+  /// **'视频'**
+  String get playerStatsVideo;
+
+  /// No description provided for @playerStatsAudio.
+  ///
+  /// In zh, this message translates to:
+  /// **'音频'**
+  String get playerStatsAudio;
+
+  /// No description provided for @playerStatsBuffer.
+  ///
+  /// In zh, this message translates to:
+  /// **'缓冲'**
+  String get playerStatsBuffer;
+
+  /// No description provided for @playerStatsVolume.
+  ///
+  /// In zh, this message translates to:
+  /// **'音量'**
+  String get playerStatsVolume;
+
+  /// No description provided for @playerStatsMethod.
+  ///
+  /// In zh, this message translates to:
+  /// **'方式'**
+  String get playerStatsMethod;
+
+  /// No description provided for @playerSettingsSaveFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'播放设置保存失败。'**
+  String get playerSettingsSaveFailed;
+
   /// No description provided for @homeOverviewUnavailable.
   ///
   /// In zh, this message translates to:

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../../app/locale_preference.dart';
 import '../../../l10n/app_localizations_context.dart';
 import '../../../ui/core/app_colors.dart';
+import '../../player/models/player_preferences.dart';
 import '../../settings/views/settings_page.dart';
 import '../models/emby_server.dart';
 import '../repositories/drift_server_repository.dart';
@@ -26,6 +27,9 @@ class ServerHomePage extends StatefulWidget {
     required this.onLocalePreferenceSelected,
     required this.localePreferenceListenable,
     required this.localeLoadedListenable,
+    this.playerPreferences = const PlayerPreferences(),
+    this.arePlayerPreferencesLoaded = false,
+    this.onPlayerPreferencesChanged,
   });
 
   final EmbyServerService? serverService;
@@ -36,6 +40,9 @@ class ServerHomePage extends StatefulWidget {
   final Future<void> Function(LocalePreference) onLocalePreferenceSelected;
   final ValueListenable<LocalePreference> localePreferenceListenable;
   final ValueListenable<bool> localeLoadedListenable;
+  final PlayerPreferences playerPreferences;
+  final bool arePlayerPreferencesLoaded;
+  final Future<void> Function(PlayerPreferences)? onPlayerPreferencesChanged;
 
   @override
   State<ServerHomePage> createState() => _ServerHomePageState();
@@ -172,6 +179,11 @@ class _ServerHomePageState extends State<ServerHomePage> {
                       isLocaleLoaded: isLoaded,
                       onLocalePreferenceSelected:
                           widget.onLocalePreferenceSelected,
+                      playerPreferences: widget.playerPreferences,
+                      arePlayerPreferencesLoaded:
+                          widget.arePlayerPreferencesLoaded,
+                      onPlayerPreferencesChanged:
+                          widget.onPlayerPreferencesChanged ?? (_) async {},
                     ),
                   ),
             ),

@@ -149,6 +149,53 @@ class EmbyMediaDetailService {
         .toList(growable: false);
   }
 
+  /// Finds the episode immediately after [episodeId] in series order.
+  Future<EmbyMediaDetail?> getNextEpisode({
+    required String serverAddress,
+    required String accessToken,
+    required String userId,
+    required String seriesId,
+    required String episodeId,
+  }) async {
+    final payload = await _getJson(
+      _endpoint(serverAddress, 'Shows/${_segment(seriesId)}/Episodes').replace(
+        queryParameters: {
+          'UserId': userId,
+          'Fields': 'Overview,MediaSources,MediaStreams,RunTimeTicks,UserData,SeriesId,SeasonId,ParentIndexNumber,IndexNumber',
+          'SortBy': 'ParentIndexNumber,IndexNumber',
+          'SortOrder': 'Ascending',
+          'Limit': '1000',
+        },
+      ),
+      accessToken,
+      cacheScope: _cacheScope(serverAddress, userId),
+      forceRefresh: true,
+    );
+    final episodes =
+        _readItems(payload)
+            .map(EmbyMediaDetail.fromJson)
+            .where((episode) => episode.type.toLowerCase() == 'episode')
+            .toList()
+          ..sort(_compareEpisodes);
+    final currentIndex = episodes.indexWhere(
+      (episode) => episode.id == episodeId,
+    );
+    if (currentIndex < 0 || currentIndex + 1 >= episodes.length) return null;
+    return episodes[currentIndex + 1];
+  }
+
+  int _compareEpisodes(EmbyMediaDetail left, EmbyMediaDetail right) {
+    final season = (left.seasonNumber ?? -1).compareTo(
+      right.seasonNumber ?? -1,
+    );
+    if (season != 0) return season;
+    final episode = (left.episodeNumber ?? -1).compareTo(
+      right.episodeNumber ?? -1,
+    );
+    if (episode != 0) return episode;
+    return left.name.compareTo(right.name);
+  }
+
   /// Loads the main item. Missing/malformed essential payloads throw.
   Future<EmbyMediaDetail> getDetail({
     required String serverAddress,

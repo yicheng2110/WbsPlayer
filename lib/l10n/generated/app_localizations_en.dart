@@ -333,6 +333,134 @@ class AppLocalizationsEn extends AppLocalizations {
   String get mediaDetailFavoriteFailed => 'Could not update favorite status.';
 
   @override
+  String get playerBack => 'Back';
+
+  @override
+  String get playerTracks => 'Audio and subtitles';
+
+  @override
+  String get playerAudio => 'Audio';
+
+  @override
+  String get playerSubtitles => 'Subtitles';
+
+  @override
+  String get playerSubtitlesOff => 'Off';
+
+  @override
+  String get playerSpeed => 'Playback speed';
+
+  @override
+  String get playerSeek => 'Seek';
+
+  @override
+  String get playerBrightness => 'Brightness';
+
+  @override
+  String get playerVolume => 'Volume';
+
+  @override
+  String get playerPlay => 'Play';
+
+  @override
+  String get playerPause => 'Pause';
+
+  @override
+  String get playerBack10 => 'Back 10 seconds';
+
+  @override
+  String get playerForward10 => 'Forward 10 seconds';
+
+  @override
+  String get playerRetry => 'Retry';
+
+  @override
+  String get playerPlaybackFailed => 'Playback failed';
+
+  @override
+  String get playerQuality => 'Streaming quality';
+
+  @override
+  String get playerQualityOriginal => 'Original quality';
+
+  @override
+  String get playerQualityLimit => 'Limit bitrate';
+
+  @override
+  String get playerSubtitleLanguage => 'Preferred subtitle language';
+
+  @override
+  String get playerSubtitleSize => 'Subtitle size';
+
+  @override
+  String get playerAudioPassthrough => 'Audio passthrough';
+
+  @override
+  String get playerHardwareAcceleration => 'Hardware decoding';
+
+  @override
+  String get playerNextEpisode => 'Next episode';
+
+  @override
+  String get playerStats => 'Playback statistics';
+
+  @override
+  String get playerExternalSubtitles => 'External subtitles';
+
+  @override
+  String get playerRetrying => 'Retrying playback…';
+
+  @override
+  String get playerMute => 'Mute';
+
+  @override
+  String get playerSubtitleJapanese => 'Japanese';
+
+  @override
+  String get playerNoPlayableUrl => 'This media source has no direct-play URL.';
+
+  @override
+  String get playerInvalidPlaybackUrl =>
+      'The server returned an invalid playback address.';
+
+  @override
+  String get playerNetworkError => 'Could not contact the media server.';
+
+  @override
+  String get playerPlaybackTimeout =>
+      'The media server timed out. Please retry.';
+
+  @override
+  String get playerRequestFailed =>
+      'The media server rejected the playback request.';
+
+  @override
+  String get playerSubtitleUnsupported =>
+      'This subtitle format is not supported.';
+
+  @override
+  String get playerInvalidPlaybackResponse =>
+      'The media server returned an invalid response.';
+
+  @override
+  String get playerStatsVideo => 'Video';
+
+  @override
+  String get playerStatsAudio => 'Audio';
+
+  @override
+  String get playerStatsBuffer => 'Buffer';
+
+  @override
+  String get playerStatsVolume => 'Volume';
+
+  @override
+  String get playerStatsMethod => 'Method';
+
+  @override
+  String get playerSettingsSaveFailed => 'Failed to save playback settings.';
+
+  @override
   String get homeOverviewUnavailable => 'No overview available';
 
   @override

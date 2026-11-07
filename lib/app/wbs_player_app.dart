@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../features/servers/models/emby_media.dart';
+import '../features/servers/models/emby_media_detail.dart';
 import '../features/servers/models/emby_server.dart';
 import '../features/servers/repositories/drift_server_repository.dart';
 import '../features/servers/repositories/server_repository.dart';
@@ -16,6 +17,10 @@ import '../features/servers/views/emby_home_page.dart';
 import '../features/servers/views/emby_library_page.dart';
 import '../features/servers/views/emby_media_detail_page.dart';
 import '../features/servers/views/server_home_page.dart';
+import '../features/servers/services/emby_media_detail_service.dart';
+import '../features/player/models/player_preferences.dart';
+import '../features/player/services/player_preferences_store.dart';
+import '../features/player/views/player_page.dart';
 import '../l10n/app_localizations_context.dart';
 import '../l10n/generated/app_localizations.dart';
 import '../ui/core/app_colors.dart';
@@ -41,6 +46,53 @@ class _MediaRouteArgs {
   final String userId;
   final String itemId;
   final EmbyLibrary? library;
+}
+
+String _playerText(BuildContext context, String key) {
+  final l10n = context.l10n;
+  return switch (key) {
+    'playerBack' => l10n.playerBack,
+    'playerTracks' => l10n.playerTracks,
+    'playerAudio' => l10n.playerAudio,
+    'playerSubtitles' => l10n.playerSubtitles,
+    'playerSubtitlesOff' => l10n.playerSubtitlesOff,
+    'playerSpeed' => l10n.playerSpeed,
+    'playerSeek' => l10n.playerSeek,
+    'playerBrightness' => l10n.playerBrightness,
+    'playerVolume' => l10n.playerVolume,
+    'playerPlay' => l10n.playerPlay,
+    'playerPause' => l10n.playerPause,
+    'playerBack10' => l10n.playerBack10,
+    'playerForward10' => l10n.playerForward10,
+    'playerRetry' => l10n.playerRetry,
+    'playerPlaybackFailed' => l10n.playerPlaybackFailed,
+    'playerMute' => l10n.playerMute,
+    'playerQuality' => l10n.playerQuality,
+    'playerQualityOriginal' => l10n.playerQualityOriginal,
+    'playerQualityLimit' => l10n.playerQualityLimit,
+    'playerSubtitleLanguage' => l10n.playerSubtitleLanguage,
+    'playerSubtitleSize' => l10n.playerSubtitleSize,
+    'playerAudioPassthrough' => l10n.playerAudioPassthrough,
+    'playerHardwareAcceleration' => l10n.playerHardwareAcceleration,
+    'playerNextEpisode' => l10n.playerNextEpisode,
+    'playerStats' => l10n.playerStats,
+    'playerExternalSubtitles' => l10n.playerExternalSubtitles,
+    'playerRetrying' => l10n.playerRetrying,
+    'playerSubtitleJapanese' => l10n.playerSubtitleJapanese,
+    'playerNoPlayableUrl' => l10n.playerNoPlayableUrl,
+    'playerInvalidPlaybackUrl' => l10n.playerInvalidPlaybackUrl,
+    'playerNetworkError' => l10n.playerNetworkError,
+    'playerPlaybackTimeout' => l10n.playerPlaybackTimeout,
+    'playerRequestFailed' => l10n.playerRequestFailed,
+    'playerSubtitleUnsupported' => l10n.playerSubtitleUnsupported,
+    'playerInvalidPlaybackResponse' => l10n.playerInvalidPlaybackResponse,
+    'playerStatsVideo' => l10n.playerStatsVideo,
+    'playerStatsAudio' => l10n.playerStatsAudio,
+    'playerStatsBuffer' => l10n.playerStatsBuffer,
+    'playerStatsVolume' => l10n.playerStatsVolume,
+    'playerStatsMethod' => l10n.playerStatsMethod,
+    _ => key,
+  };
 }
 
 String _mediaDetailText(BuildContext context, String key) {
@@ -124,12 +176,14 @@ class WbsPlayerApp extends StatefulWidget {
     this.serverRepository,
     this.libraryService,
     this.localePreferenceStore,
+    this.playerPreferencesStore,
   });
 
   final EmbyServerService? serverService;
   final ServerRepository? serverRepository;
   final EmbyLibraryService? libraryService;
   final LocalePreferenceStore? localePreferenceStore;
+  final PlayerPreferencesStore? playerPreferencesStore;
 
   @override
   State<WbsPlayerApp> createState() => _WbsPlayerAppState();
@@ -139,9 +193,14 @@ class _WbsPlayerAppState extends State<WbsPlayerApp> {
   late final LocalePreferenceStore _localePreferenceStore;
   LocalePreference _localePreference = LocalePreference.system;
   bool _isLocaleLoaded = false;
+  PlayerPreferences _playerPreferences = const PlayerPreferences();
+  bool _arePlayerPreferencesLoaded = false;
   final _scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
   final _localePreferenceNotifier = ValueNotifier(LocalePreference.system);
   final _localeLoadedNotifier = ValueNotifier(false);
+  final _playerPreferencesNotifier = ValueNotifier(const PlayerPreferences());
+  final _playerPreferencesLoadedNotifier = ValueNotifier(false);
+  late final PlayerPreferencesStore _playerPreferencesStore;
   late final EmbyServerService _serverService =
       widget.serverService ?? EmbyServerService();
   late final bool _ownsServerService = widget.serverService == null;
@@ -154,6 +213,8 @@ class _WbsPlayerAppState extends State<WbsPlayerApp> {
   late final Listenable _serverHomeRefresh = Listenable.merge([
     _localePreferenceNotifier,
     _localeLoadedNotifier,
+    _playerPreferencesNotifier,
+    _playerPreferencesLoadedNotifier,
   ]);
   late final GoRouter _router = GoRouter(
     routes: [
@@ -173,6 +234,9 @@ class _WbsPlayerAppState extends State<WbsPlayerApp> {
             isLocaleLoaded: _isLocaleLoaded,
             localePreferenceListenable: _localePreferenceNotifier,
             localeLoadedListenable: _localeLoadedNotifier,
+            playerPreferences: _playerPreferences,
+            arePlayerPreferencesLoaded: _arePlayerPreferencesLoaded,
+            onPlayerPreferencesChanged: _setPlayerPreferences,
           ),
         ),
         routes: [
@@ -274,6 +338,28 @@ class _WbsPlayerAppState extends State<WbsPlayerApp> {
                 ),
               ),
               GoRoute(
+                path: 'play/:itemId',
+                builder: (context, state) => FutureBuilder<PlayerPageArgs?>(
+                  future: _resolvePlayerRoute(state, context),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState != ConnectionState.done) {
+                      return const Scaffold(
+                        backgroundColor: Colors.black,
+                        body: Center(child: CircularProgressIndicator()),
+                      );
+                    }
+                    final args = snapshot.data;
+                    if (args == null) {
+                      return Scaffold(
+                        backgroundColor: Colors.black,
+                        body: Center(child: Text(context.l10n.homeLoadFailed)),
+                      );
+                    }
+                    return PlayerPage(key: ValueKey(args.itemId), args: args);
+                  },
+                ),
+              ),
+              GoRoute(
                 path: 'item/:itemId',
                 builder: (context, state) => FutureBuilder<_MediaRouteArgs?>(
                   future: _resolveMediaRoute(state),
@@ -297,6 +383,44 @@ class _WbsPlayerAppState extends State<WbsPlayerApp> {
                       itemId: args.itemId,
                       libraryService: _libraryService,
                       text: (key) => _mediaDetailText(context, key),
+                      playbackDelegate:
+                          ({
+                            required detail,
+                            required mediaSource,
+                            audioStream,
+                          }) async {
+                            await context.push<void>(
+                              '$serverPath/play/${Uri.encodeComponent(args.itemId)}',
+                              extra: PlayerPageArgs(
+                                serverAddress: args.server.address,
+                                accessToken: args.server.accessToken,
+                                userId: args.userId,
+                                itemId: args.itemId,
+                                detail: detail,
+                                mediaSource: mediaSource,
+                                audioStream: audioStream,
+                                preferences: _playerPreferences,
+                                nextEpisodeLoader:
+                                    detail.type.toLowerCase() == 'episode' &&
+                                        detail.seriesId != null
+                                    ? () => _loadNextEpisodeArgs(
+                                        context: context,
+                                        serverPath: serverPath,
+                                        server: args.server,
+                                        userId: args.userId,
+                                        current: detail,
+                                      )
+                                    : null,
+                                onNextEpisode: (next) =>
+                                    context.pushReplacement<void>(
+                                      '$serverPath/play/${Uri.encodeComponent(next.itemId)}',
+                                      extra: next,
+                                    ),
+                                title: detail.name,
+                                text: (key) => _playerText(context, key),
+                              ),
+                            );
+                          },
                       onSimilarTap: (item) {
                         context.push(
                           '$serverPath/item/${Uri.encodeComponent(item.id)}',
@@ -374,6 +498,119 @@ class _WbsPlayerAppState extends State<WbsPlayerApp> {
     return null;
   }
 
+  Future<PlayerPageArgs?> _resolvePlayerRoute(
+    GoRouterState state,
+    BuildContext context,
+  ) async {
+    if (state.extra case final PlayerPageArgs args) return args;
+    final route = await _resolveMediaRoute(state);
+    if (route == null) return null;
+    final detailService = EmbyMediaDetailService();
+    try {
+      final detail = await detailService.getDetail(
+        serverAddress: route.server.address,
+        accessToken: route.server.accessToken,
+        userId: route.userId,
+        itemId: route.itemId,
+        forceRefresh: true,
+      );
+      final sources = detail.mediaSources.isNotEmpty
+          ? detail.mediaSources
+          : await detailService.getMediaSources(
+              serverAddress: route.server.address,
+              accessToken: route.server.accessToken,
+              userId: route.userId,
+              itemId: route.itemId,
+              forceRefresh: true,
+            );
+      if (sources.isEmpty) return null;
+      final serverPath = '/server/${state.pathParameters['serverId']}';
+      return PlayerPageArgs(
+        serverAddress: route.server.address,
+        accessToken: route.server.accessToken,
+        userId: route.userId,
+        itemId: route.itemId,
+        detail: detail,
+        mediaSource: sources.first,
+        preferences: _playerPreferences,
+        title: detail.name,
+        text: (key) => _playerText(context, key),
+        nextEpisodeLoader:
+            detail.type.toLowerCase() == 'episode' && detail.seriesId != null
+            ? () => _loadNextEpisodeArgs(
+                context: context,
+                serverPath: serverPath,
+                server: route.server,
+                userId: route.userId,
+                current: detail,
+              )
+            : null,
+        onNextEpisode: (next) => context.pushReplacement<void>(
+          '$serverPath/play/${Uri.encodeComponent(next.itemId)}',
+          extra: next,
+        ),
+      );
+    } catch (_) {
+      return null;
+    } finally {
+      detailService.close();
+    }
+  }
+
+  Future<PlayerPageArgs?> _loadNextEpisodeArgs({
+    required BuildContext context,
+    required String serverPath,
+    required EmbyServer server,
+    required String userId,
+    required EmbyMediaDetail current,
+  }) async {
+    final detailService = EmbyMediaDetailService();
+    try {
+      final episode = await detailService.getNextEpisode(
+        serverAddress: server.address,
+        accessToken: server.accessToken,
+        userId: userId,
+        seriesId: current.seriesId!,
+        episodeId: current.id,
+      );
+      if (episode == null) return null;
+      final sources = episode.mediaSources.isNotEmpty
+          ? episode.mediaSources
+          : await detailService.getMediaSources(
+              serverAddress: server.address,
+              accessToken: server.accessToken,
+              userId: userId,
+              itemId: episode.id,
+              forceRefresh: true,
+            );
+      if (sources.isEmpty) return null;
+      return PlayerPageArgs(
+        serverAddress: server.address,
+        accessToken: server.accessToken,
+        userId: userId,
+        itemId: episode.id,
+        detail: episode,
+        mediaSource: sources.first,
+        preferences: _playerPreferences,
+        title: episode.name,
+        text: (key) => _playerText(context, key),
+        nextEpisodeLoader: () => _loadNextEpisodeArgs(
+          context: context,
+          serverPath: serverPath,
+          server: server,
+          userId: userId,
+          current: episode,
+        ),
+        onNextEpisode: (next) => context.pushReplacement<void>(
+          '$serverPath/play/${Uri.encodeComponent(next.itemId)}',
+          extra: next,
+        ),
+      );
+    } finally {
+      detailService.close();
+    }
+  }
+
   Future<_MediaRouteArgs?> _resolveMediaRoute(GoRouterState state) async {
     final extra = state.extra;
     final itemId = state.pathParameters['itemId'];
@@ -405,7 +642,43 @@ class _WbsPlayerAppState extends State<WbsPlayerApp> {
     _localePreferenceStore =
         widget.localePreferenceStore ??
         SharedPreferencesLocalePreferenceStore();
+    _playerPreferencesStore =
+        widget.playerPreferencesStore ??
+        SharedPreferencesPlayerPreferencesStore();
     _loadLocalePreference();
+    _loadPlayerPreferences();
+  }
+
+  Future<void> _loadPlayerPreferences() async {
+    PlayerPreferences preferences;
+    try {
+      preferences = await _playerPreferencesStore.read();
+    } catch (_) {
+      preferences = const PlayerPreferences();
+    }
+    if (!mounted) return;
+    setState(() {
+      _playerPreferences = preferences;
+      _arePlayerPreferencesLoaded = true;
+      _playerPreferencesNotifier.value = preferences;
+      _playerPreferencesLoadedNotifier.value = true;
+    });
+  }
+
+  Future<void> _setPlayerPreferences(PlayerPreferences preferences) async {
+    final previous = _playerPreferences;
+    setState(() => _playerPreferences = preferences);
+    _playerPreferencesNotifier.value = preferences;
+    try {
+      await _playerPreferencesStore.write(preferences);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _playerPreferences = previous);
+      _playerPreferencesNotifier.value = previous;
+      _scaffoldMessengerKey.currentState?.showSnackBar(
+        SnackBar(content: Text(context.l10n.playerSettingsSaveFailed)),
+      );
+    }
   }
 
   Future<void> _loadLocalePreference() async {
@@ -457,6 +730,8 @@ class _WbsPlayerAppState extends State<WbsPlayerApp> {
     _router.dispose();
     _localePreferenceNotifier.dispose();
     _localeLoadedNotifier.dispose();
+    _playerPreferencesNotifier.dispose();
+    _playerPreferencesLoadedNotifier.dispose();
     if (_ownsServerService) _serverService.close();
     if (_ownsLibraryService) _libraryService.close();
     if (_ownsServerRepository) unawaited(_serverRepository.close());

@@ -374,8 +374,17 @@ class EmbyMediaSource {
     this.runTimeTicks,
     this.defaultAudioStreamIndex,
     this.defaultSubtitleStreamIndex,
+    this.directStreamUrl,
+    this.transcodingUrl,
+    this.playSessionId,
+    Map<String, String> requiredHttpHeaders = const {},
+    this.addApiKeyToDirectStreamUrl,
+    this.supportsDirectPlay,
+    this.supportsDirectStream,
+    this.supportsTranscoding,
     Iterable<EmbyMediaStream> mediaStreams = const [],
-  }) : mediaStreams = List.unmodifiable(mediaStreams);
+  }) : requiredHttpHeaders = Map.unmodifiable(requiredHttpHeaders),
+       mediaStreams = List.unmodifiable(mediaStreams);
 
   final String id;
   final String name;
@@ -385,6 +394,14 @@ class EmbyMediaSource {
   final int? runTimeTicks;
   final int? defaultAudioStreamIndex;
   final int? defaultSubtitleStreamIndex;
+  final String? directStreamUrl;
+  final String? transcodingUrl;
+  final String? playSessionId;
+  final Map<String, String> requiredHttpHeaders;
+  final bool? addApiKeyToDirectStreamUrl;
+  final bool? supportsDirectPlay;
+  final bool? supportsDirectStream;
+  final bool? supportsTranscoding;
   final List<EmbyMediaStream> mediaStreams;
 
   List<EmbyMediaStream> get audioStreams => List.unmodifiable(
@@ -402,6 +419,14 @@ class EmbyMediaSource {
     runTimeTicks: _positiveInt(json['RunTimeTicks']),
     defaultAudioStreamIndex: _nonNegativeInt(json['DefaultAudioStreamIndex']),
     defaultSubtitleStreamIndex: _integer(json['DefaultSubtitleStreamIndex']),
+    directStreamUrl: _text(json['DirectStreamUrl']),
+    transcodingUrl: _text(json['TranscodingUrl']),
+    playSessionId: _text(json['PlaySessionId']),
+    requiredHttpHeaders: _stringMap(json['RequiredHttpHeaders']),
+    addApiKeyToDirectStreamUrl: _bool(json['AddApiKeyToDirectStreamUrl']),
+    supportsDirectPlay: _bool(json['SupportsDirectPlay']),
+    supportsDirectStream: _bool(json['SupportsDirectStream']),
+    supportsTranscoding: _bool(json['SupportsTranscoding']),
     mediaStreams: _objects(json['MediaStreams']).map(EmbyMediaStream.fromJson),
   );
 
@@ -416,6 +441,17 @@ class EmbyMediaSource {
       'DefaultAudioStreamIndex': defaultAudioStreamIndex,
     if (defaultSubtitleStreamIndex != null)
       'DefaultSubtitleStreamIndex': defaultSubtitleStreamIndex,
+    if (directStreamUrl != null) 'DirectStreamUrl': directStreamUrl,
+    if (transcodingUrl != null) 'TranscodingUrl': transcodingUrl,
+    if (playSessionId != null) 'PlaySessionId': playSessionId,
+    if (requiredHttpHeaders.isNotEmpty)
+      'RequiredHttpHeaders': requiredHttpHeaders,
+    if (addApiKeyToDirectStreamUrl != null)
+      'AddApiKeyToDirectStreamUrl': addApiKeyToDirectStreamUrl,
+    if (supportsDirectPlay != null) 'SupportsDirectPlay': supportsDirectPlay,
+    if (supportsDirectStream != null)
+      'SupportsDirectStream': supportsDirectStream,
+    if (supportsTranscoding != null) 'SupportsTranscoding': supportsTranscoding,
     'MediaStreams': mediaStreams.map((stream) => stream.toJson()).toList(),
   };
 }
@@ -568,6 +604,15 @@ bool? _bool(Object? value) => switch (value) {
   },
   _ => null,
 };
+
+Map<String, String> _stringMap(Object? value) {
+  if (value is! Map) return const {};
+  return Map.unmodifiable({
+    for (final entry in value.entries)
+      if (entry.key is String && _text(entry.value) != null)
+        entry.key as String: _text(entry.value)!,
+  });
+}
 
 Map<String, dynamic> _map(Object? value) {
   if (value is! Map) return const {};

@@ -326,6 +326,129 @@ class AppLocalizationsZh extends AppLocalizations {
   String get mediaDetailFavoriteFailed => '收藏状态更新失败';
 
   @override
+  String get playerBack => '返回';
+
+  @override
+  String get playerTracks => '音轨与字幕';
+
+  @override
+  String get playerAudio => '音轨';
+
+  @override
+  String get playerSubtitles => '字幕';
+
+  @override
+  String get playerSubtitlesOff => '关闭';
+
+  @override
+  String get playerSpeed => '播放速度';
+
+  @override
+  String get playerSeek => '进度';
+
+  @override
+  String get playerBrightness => '亮度';
+
+  @override
+  String get playerVolume => '音量';
+
+  @override
+  String get playerPlay => '播放';
+
+  @override
+  String get playerPause => '暂停';
+
+  @override
+  String get playerBack10 => '后退 10 秒';
+
+  @override
+  String get playerForward10 => '前进 10 秒';
+
+  @override
+  String get playerRetry => '重试';
+
+  @override
+  String get playerPlaybackFailed => '播放失败';
+
+  @override
+  String get playerQuality => '播放画质';
+
+  @override
+  String get playerQualityOriginal => '原画';
+
+  @override
+  String get playerQualityLimit => '限制码率';
+
+  @override
+  String get playerSubtitleLanguage => '默认字幕语言';
+
+  @override
+  String get playerSubtitleSize => '字幕字号';
+
+  @override
+  String get playerAudioPassthrough => '音频直通';
+
+  @override
+  String get playerHardwareAcceleration => '硬件解码';
+
+  @override
+  String get playerNextEpisode => '下一集';
+
+  @override
+  String get playerStats => '播放统计';
+
+  @override
+  String get playerExternalSubtitles => '外挂字幕';
+
+  @override
+  String get playerRetrying => '正在重试播放…';
+
+  @override
+  String get playerMute => '静音';
+
+  @override
+  String get playerSubtitleJapanese => '日语';
+
+  @override
+  String get playerNoPlayableUrl => '此媒体版本没有可用的直连地址。';
+
+  @override
+  String get playerInvalidPlaybackUrl => '服务器返回了无效的播放地址。';
+
+  @override
+  String get playerNetworkError => '无法连接媒体服务器。';
+
+  @override
+  String get playerPlaybackTimeout => '媒体服务器响应超时，请重试。';
+
+  @override
+  String get playerRequestFailed => '媒体服务器拒绝了播放请求。';
+
+  @override
+  String get playerSubtitleUnsupported => '暂不支持此字幕格式。';
+
+  @override
+  String get playerInvalidPlaybackResponse => '媒体服务器返回了无效响应。';
+
+  @override
+  String get playerStatsVideo => '视频';
+
+  @override
+  String get playerStatsAudio => '音频';
+
+  @override
+  String get playerStatsBuffer => '缓冲';
+
+  @override
+  String get playerStatsVolume => '音量';
+
+  @override
+  String get playerStatsMethod => '方式';
+
+  @override
+  String get playerSettingsSaveFailed => '播放设置保存失败。';
+
+  @override
   String get homeOverviewUnavailable => '暂无简介';
 
   @override
