@@ -40,6 +40,9 @@ void main() {
             jsonEncode({
               'Items': [
                 {'Id': 'series-1', 'Name': 'Example series', 'Type': 'Series'},
+                {'Id': 'folder-1', 'Name': 'Folder', 'Type': 'Folder'},
+                {'Id': 'studio-1', 'Name': 'Studio', 'Type': 'Studio'},
+                {'Id': 'tag-1', 'Name': 'Tag', 'Type': 'Tag'},
               ],
               'TotalRecordCount': 1,
             }),
@@ -79,6 +82,43 @@ void main() {
     );
     expect(itemsRequest.url.queryParameters['Recursive'], 'true');
     expect(itemsRequest.url.queryParameters['IncludeItemTypes'], 'Series');
+  });
+
+  test('loads only movies from a movie library', () async {
+    final requests = <http.Request>[];
+    final service = EmbyLibraryService(
+      client: MockClient((request) async {
+        requests.add(request);
+        return http.Response(
+          jsonEncode({
+            'Items': [
+              {'Id': 'movie-1', 'Name': 'A movie', 'Type': 'Movie'},
+              {'Id': 'folder-1', 'Name': 'Folder', 'Type': 'Folder'},
+              {'Id': 'studio-1', 'Name': 'Studio', 'Type': 'Studio'},
+              {'Id': 'tag-1', 'Name': 'Tag', 'Type': 'Tag'},
+            ],
+            'TotalRecordCount': 1,
+          }),
+          200,
+        );
+      }),
+    );
+    addTearDown(service.close);
+
+    final page = await service.loadLibraryItems(
+      serverAddress: 'http://emby.example:8096',
+      accessToken: 'token',
+      userId: 'user-1',
+      parentId: 'movie-library',
+      collectionType: 'movies',
+      sortBy: EmbyLibrarySort.title,
+      ascending: true,
+      startIndex: 0,
+    );
+
+    expect(page.items.map((item) => item.type), ['Movie']);
+    final request = requests.single;
+    expect(request.url.queryParameters['IncludeItemTypes'], 'Movie');
   });
 
   test('caches library item pages and refresh bypasses the cache', () async {

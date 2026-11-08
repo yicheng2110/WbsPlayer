@@ -209,6 +209,11 @@ class EmbyLibraryService {
   }) async {
     final apiSort = sortBy.apiValue;
     if (apiSort == null) throw const EmbyLibraryRequestException();
+    final expectedItemTypes = switch (collectionType?.toLowerCase()) {
+      'movies' => const ['Movie'],
+      'tvshows' => const ['Series'],
+      _ => const ['Movie', 'Series'],
+    };
     final payload = await _getPayload(
       serverAddress: serverAddress,
       accessToken: accessToken,
@@ -222,8 +227,7 @@ class EmbyLibraryService {
         'Limit': '$limit',
         'SortBy': apiSort,
         'SortOrder': ascending ? 'Ascending' : 'Descending',
-        if (collectionType?.toLowerCase() == 'tvshows')
-          'IncludeItemTypes': 'Series',
+        'IncludeItemTypes': expectedItemTypes.join(','),
         'Fields': 'ProductionYear,Overview',
         'EnableImages': 'true',
         'EnableUserData': 'true',
@@ -233,7 +237,9 @@ class EmbyLibraryService {
     if (payload is! Map<String, dynamic> || payload['Items'] is! List) {
       throw const EmbyLibraryRequestException();
     }
-    final items = _parseItems(payload['Items'] as List);
+    final items = _parseItems(payload['Items'] as List)
+        .where((item) => expectedItemTypes.contains(item.type))
+        .toList(growable: false);
     final rawTotal = payload['TotalRecordCount'];
     final total = rawTotal is int
         ? rawTotal
