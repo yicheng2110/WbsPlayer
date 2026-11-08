@@ -1,3 +1,6 @@
+import 'dart:ui' show ImmutableBuffer;
+
+import 'package:flutter/foundation.dart' show SynchronousFuture;
 import 'package:flutter/material.dart';
 
 import '../services/emby_image_cache.dart';

@@ -27,6 +27,7 @@ class ServerHomePage extends StatefulWidget {
     required this.localePreferenceListenable,
     required this.localeLoadedListenable,
     required this.onPlayerSettingsTap,
+    this.onGlobalSettingsTap,
   });
 
   final EmbyServerService? serverService;
@@ -38,6 +39,7 @@ class ServerHomePage extends StatefulWidget {
   final ValueListenable<LocalePreference> localePreferenceListenable;
   final ValueListenable<bool> localeLoadedListenable;
   final VoidCallback onPlayerSettingsTap;
+  final VoidCallback? onGlobalSettingsTap;
 
   @override
   State<ServerHomePage> createState() => _ServerHomePageState();
@@ -175,6 +177,7 @@ class _ServerHomePageState extends State<ServerHomePage> {
                       onLocalePreferenceSelected:
                           widget.onLocalePreferenceSelected,
                       onPlayerSettingsTap: widget.onPlayerSettingsTap,
+                      onGlobalSettingsTap: widget.onGlobalSettingsTap,
                     ),
                   ),
             ),
