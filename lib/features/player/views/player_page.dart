@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
-import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:screen_brightness/screen_brightness.dart';
 
@@ -84,6 +83,8 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
   final _osdKey = GlobalKey<PlayerOsdControlsState>();
   final FocusNode _focusNode = FocusNode(debugLabel: 'PlayerPage');
   bool _isSeeking = false;
+  bool _controlsLocked = false;
+  BoxFit _videoFit = BoxFit.contain;
   bool _showStats = false;
   bool _isAdvancing = false;
   String? _completionHandledItemId;
@@ -135,13 +136,16 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
     unawaited(_playNextEpisode());
   }
 
-  Future<void> _showTracks() async {
+  Future<void> _showTracks([
+    PlayerTrackSection section = PlayerTrackSection.all,
+  ]) async {
     final state = _viewModel.state;
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       backgroundColor: const Color(0xFF202124),
       builder: (context) => PlayerTrackSheet(
+        section: section,
         tracks: state.tracks,
         externalSubtitles: widget.args.mediaSource.mediaStreams
             .where(
@@ -164,7 +168,7 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
           unawaited(
             _viewModel.setSubtitleStream(stream).catchError((Object error) {
               if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
+                ScaffoldMessenger.of(this.context).showSnackBar(
                   SnackBar(
                     content: Text(
                       '${_text('playerPlaybackFailed', 'Playback failed')}: ${_playbackError(error.toString())}',
@@ -204,12 +208,16 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
         actions: <Type, Action<Intent>>{
           ActivateIntent: CallbackAction<ActivateIntent>(
             onInvoke: (_) {
+              if (_controlsLocked) return null;
+              _osdKey.currentState?.showControls();
               unawaited(_viewModel.togglePlayPause());
               return null;
             },
           ),
           _SeekIntent: CallbackAction<_SeekIntent>(
             onInvoke: (intent) {
+              if (_controlsLocked) return null;
+              _osdKey.currentState?.showControls();
               unawaited(
                 _viewModel.seek(
                   _viewModel.state.position + Duration(seconds: intent.seconds),
@@ -220,6 +228,8 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
           ),
           _MuteIntent: CallbackAction<_MuteIntent>(
             onInvoke: (_) {
+              if (_controlsLocked) return null;
+              _osdKey.currentState?.showControls();
               unawaited(_viewModel.toggleMute());
               return null;
             },
@@ -234,14 +244,20 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
               final state = _viewModel.state;
               final error = state.error;
               return PopScope(
+                canPop: !_controlsLocked,
                 onPopInvokedWithResult: (didPop, result) {
-                  if (didPop) unawaited(_viewModel.stop());
+                  if (didPop) {
+                    unawaited(_viewModel.stop());
+                  } else if (_controlsLocked) {
+                    _osdKey.currentState?.showControls();
+                  }
                 },
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
                     Video(
                       controller: _videoController,
+                      fit: _videoFit,
                       controls: NoVideoControls,
                       pauseUponEnteringBackgroundMode: false,
                       subtitleViewConfiguration: SubtitleViewConfiguration(
@@ -254,6 +270,7 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
                       ),
                     ),
                     PlayerGestureLayer(
+                      locked: _controlsLocked,
                       duration: state.duration,
                       position: state.position,
                       volume: state.volume,
@@ -265,9 +282,12 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
                       onDoubleTap: () =>
                           unawaited(_viewModel.togglePlayPause()),
                       onPreviewChanged: (position) {
-                        if (mounted)
+                        if (mounted) {
                           setState(() => _isSeeking = position != null);
+                        }
                       },
+                      onInteractionChanged: (active) =>
+                          _osdKey.currentState?.setGestureActive(active),
                       onActivity: () => _osdKey.currentState?.showControls(),
                       text: (key) => _text(key, key),
                     ),
@@ -280,7 +300,25 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
                           unawaited(_viewModel.togglePlayPause()),
                       onSeek: (position) =>
                           unawaited(_viewModel.seek(position)),
-                      onTracks: _showTracks,
+                      onTracks: () => _showTracks(),
+                      onAudio: () => _showTracks(PlayerTrackSection.audio),
+                      onSubtitles: () =>
+                          _showTracks(PlayerTrackSection.subtitles),
+                      onRateChanged: (rate) =>
+                          unawaited(_viewModel.setRate(rate)),
+                      onLockChanged: (locked) =>
+                          setState(() => _controlsLocked = locked),
+                      hardwareAcceleration:
+                          widget.args.preferences.hardwareAcceleration,
+                      onFit: () {
+                        setState(() {
+                          _videoFit = switch (_videoFit) {
+                            BoxFit.contain => BoxFit.cover,
+                            BoxFit.cover => BoxFit.fill,
+                            _ => BoxFit.contain,
+                          };
+                        });
+                      },
                       onRetry: () => _viewModel.open(),
                       onMute: () => unawaited(_viewModel.toggleMute()),
                       onStats: () => setState(() => _showStats = !_showStats),
@@ -306,7 +344,8 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
                       const Center(
                         child: CircularProgressIndicator(color: Colors.white),
                       ),
-                    if (_showStats) _buildStatsOverlay(state),
+                    if (_showStats && !_controlsLocked)
+                      _buildStatsOverlay(state),
                     if (state.isCompleted &&
                         widget.args.nextEpisodeLoader != null)
                       _buildNextEpisodePrompt(),
@@ -355,8 +394,9 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
   );
 
   Widget _buildStatsOverlay(PlayerSessionState state) => Positioned(
-    top: 20,
-    left: 20,
+    top: 76,
+    left: 24,
+    right: 24,
     child: IgnorePointer(
       child: DecoratedBox(
         decoration: BoxDecoration(

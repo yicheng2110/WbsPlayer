@@ -10,6 +10,7 @@ class PlayerSessionState {
     this.duration = Duration.zero,
     this.buffered = Duration.zero,
     this.volume = 100,
+    this.rate = 1,
     this.width,
     this.height,
     this.videoCodec,
@@ -28,6 +29,7 @@ class PlayerSessionState {
   final Duration duration;
   final Duration buffered;
   final double volume;
+  final double rate;
   final int? width;
   final int? height;
   final String? videoCodec;
@@ -48,6 +50,7 @@ class PlayerSessionState {
     Duration? duration,
     Duration? buffered,
     double? volume,
+    double? rate,
     int? width,
     int? height,
     String? videoCodec,
@@ -66,6 +69,7 @@ class PlayerSessionState {
     duration: duration ?? this.duration,
     buffered: buffered ?? this.buffered,
     volume: volume ?? this.volume,
+    rate: rate ?? this.rate,
     width: width ?? this.width,
     height: height ?? this.height,
     videoCodec: videoCodec ?? this.videoCodec,

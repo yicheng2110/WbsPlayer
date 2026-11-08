@@ -3,6 +3,9 @@ import 'package:media_kit/media_kit.dart';
 
 import '../../servers/models/emby_media_detail.dart';
 
+/// Sections available from the player's track controls.
+enum PlayerTrackSection { all, audio, subtitles }
+
 /// Audio, subtitle and playback speed selection sheet.
 class PlayerTrackSheet extends StatelessWidget {
   const PlayerTrackSheet({
@@ -15,6 +18,7 @@ class PlayerTrackSheet extends StatelessWidget {
     required this.onRateSelected,
     this.externalSubtitles = const [],
     this.onExternalSubtitleSelected,
+    this.section = PlayerTrackSection.all,
     this.text,
   });
 
@@ -26,6 +30,7 @@ class PlayerTrackSheet extends StatelessWidget {
   final ValueChanged<double> onRateSelected;
   final List<EmbyMediaStream> externalSubtitles;
   final ValueChanged<EmbyMediaStream>? onExternalSubtitleSelected;
+  final PlayerTrackSection section;
   final String Function(String key)? text;
 
   String _text(String key, String fallback) => text?.call(key) ?? fallback;
@@ -40,36 +45,57 @@ class PlayerTrackSheet extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Center(
-              child: Text(
-                _text('playerTracks', 'Tracks'),
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
+              child: Text(switch (section) {
+                PlayerTrackSection.all => _text('playerTracks', 'Tracks'),
+                PlayerTrackSection.audio => _text('playerAudio', 'Audio'),
+                PlayerTrackSection.subtitles => _text(
+                  'playerSubtitles',
+                  'Subtitles',
+                ),
+              }, style: Theme.of(context).textTheme.titleLarge),
             ),
-            if (tracks.audio.isNotEmpty) ...[
+            if (section != PlayerTrackSection.subtitles &&
+                tracks.audio.isNotEmpty) ...[
               _heading(context, _text('playerAudio', 'Audio')),
-              for (final track in tracks.audio)
-                RadioListTile<AudioTrack>(
-                  dense: true,
-                  value: track,
-                  groupValue: selectedAudio,
-                  title: Text(_trackName(track)),
-                  onChanged: (value) {
-                    if (value != null) onAudioSelected(value);
-                  },
+              RadioGroup<AudioTrack>(
+                groupValue: selectedAudio,
+                onChanged: (value) {
+                  if (value != null) onAudioSelected(value);
+                },
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    for (final track in tracks.audio)
+                      RadioListTile<AudioTrack>(
+                        dense: true,
+                        value: track,
+                        title: Text(_trackName(track)),
+                      ),
+                  ],
                 ),
+              ),
             ],
-            if (tracks.subtitle.isNotEmpty || externalSubtitles.isNotEmpty) ...[
+            if (section != PlayerTrackSection.audio &&
+                (tracks.subtitle.isNotEmpty ||
+                    externalSubtitles.isNotEmpty)) ...[
               _heading(context, _text('playerSubtitles', 'Subtitles')),
-              for (final track in tracks.subtitle)
-                RadioListTile<SubtitleTrack>(
-                  dense: true,
-                  value: track,
-                  groupValue: selectedSubtitle,
-                  title: Text(_trackName(track)),
-                  onChanged: (value) {
-                    if (value != null) onSubtitleSelected(value);
-                  },
+              RadioGroup<SubtitleTrack>(
+                groupValue: selectedSubtitle,
+                onChanged: (value) {
+                  if (value != null) onSubtitleSelected(value);
+                },
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    for (final track in tracks.subtitle)
+                      RadioListTile<SubtitleTrack>(
+                        dense: true,
+                        value: track,
+                        title: Text(_trackName(track)),
+                      ),
+                  ],
                 ),
+              ),
               if (externalSubtitles.isNotEmpty)
                 _heading(
                   context,
@@ -84,7 +110,7 @@ class PlayerTrackSheet extends StatelessWidget {
                         stream.title ??
                         stream.language ??
                         stream.codec ??
-                        'Subtitle',
+                        _text('playerSubtitles', 'Subtitles'),
                   ),
                   subtitle: stream.language == null
                       ? null
@@ -94,17 +120,19 @@ class PlayerTrackSheet extends StatelessWidget {
                       : () => onExternalSubtitleSelected!(stream),
                 ),
             ],
-            _heading(context, _text('playerSpeed', 'Speed')),
-            Wrap(
-              spacing: 8,
-              children: [
-                for (final rate in [0.75, 1.0, 1.25, 1.5, 2.0])
-                  ActionChip(
-                    label: Text('${rate}x'),
-                    onPressed: () => onRateSelected(rate),
-                  ),
-              ],
-            ),
+            if (section == PlayerTrackSection.all) ...[
+              _heading(context, _text('playerSpeed', 'Speed')),
+              Wrap(
+                spacing: 8,
+                children: [
+                  for (final rate in [0.75, 1.0, 1.25, 1.5, 2.0])
+                    ActionChip(
+                      label: Text('${rate}x'),
+                      onPressed: () => onRateSelected(rate),
+                    ),
+                ],
+              ),
+            ],
           ],
         ),
       ),

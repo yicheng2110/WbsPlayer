@@ -746,6 +746,48 @@ abstract class AppLocalizations {
   /// **'播放速度'**
   String get playerSpeed;
 
+  /// No description provided for @playerSpeedIncrease.
+  ///
+  /// In zh, this message translates to:
+  /// **'加快播放速度'**
+  String get playerSpeedIncrease;
+
+  /// No description provided for @playerSpeedDecrease.
+  ///
+  /// In zh, this message translates to:
+  /// **'减慢播放速度'**
+  String get playerSpeedDecrease;
+
+  /// No description provided for @playerLockControls.
+  ///
+  /// In zh, this message translates to:
+  /// **'锁定控制'**
+  String get playerLockControls;
+
+  /// No description provided for @playerUnlockControls.
+  ///
+  /// In zh, this message translates to:
+  /// **'解锁控制'**
+  String get playerUnlockControls;
+
+  /// No description provided for @playerVideoFit.
+  ///
+  /// In zh, this message translates to:
+  /// **'切换画面比例'**
+  String get playerVideoFit;
+
+  /// No description provided for @playerMore.
+  ///
+  /// In zh, this message translates to:
+  /// **'更多选项'**
+  String get playerMore;
+
+  /// No description provided for @playerUnmute.
+  ///
+  /// In zh, this message translates to:
+  /// **'取消静音'**
+  String get playerUnmute;
+
   /// No description provided for @playerSeek.
   ///
   /// In zh, this message translates to:

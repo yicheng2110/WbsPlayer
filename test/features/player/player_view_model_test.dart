@@ -110,6 +110,41 @@ void main() {
       expect(engine.openedMedia, isNull);
     },
   );
+
+  test(
+    'updates rate state and notifies listeners when engine emits rate',
+    () async {
+      final client = MockClient((_) async => http.Response('', 204));
+      final service = EmbyPlaybackService(client: client);
+      final reporter = EmbyPlaybackReporter(client: client);
+      final engine = _FakePlaybackEngine();
+      final viewModel = PlayerViewModel(
+        serverAddress: 'http://emby.test',
+        accessToken: '',
+        userId: 'user',
+        itemId: 'item',
+        detail: EmbyMediaDetail(id: 'item', name: 'Test', type: 'Movie'),
+        mediaSource: EmbyMediaSource(id: 'source', name: 'Source'),
+        audioStream: null,
+        playbackService: service,
+        reporter: reporter,
+        engine: engine,
+      );
+      var notificationCount = 0;
+      viewModel.addListener(() => notificationCount++);
+      addTearDown(() async {
+        viewModel.dispose();
+        await Future<void>.delayed(Duration.zero);
+        client.close();
+      });
+
+      engine.emitRate(1.5);
+      await Future<void>.delayed(Duration.zero);
+
+      expect(viewModel.state.rate, 1.5);
+      expect(notificationCount, 1);
+    },
+  );
 }
 
 class _FakePlaybackEngine implements PlaybackEngine {
@@ -192,6 +227,7 @@ class _FakePlaybackEngine implements PlaybackEngine {
 
   @override
   Future<void> setRate(double rate) async => _rate.add(rate);
+  void emitRate(double rate) => _rate.add(rate);
   @override
   Future<void> setAudioPassthrough(bool enabled) async {}
   @override

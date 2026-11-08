@@ -351,6 +351,27 @@ class AppLocalizationsEn extends AppLocalizations {
   String get playerSpeed => 'Playback speed';
 
   @override
+  String get playerSpeedIncrease => 'Increase playback speed';
+
+  @override
+  String get playerSpeedDecrease => 'Decrease playback speed';
+
+  @override
+  String get playerLockControls => 'Lock controls';
+
+  @override
+  String get playerUnlockControls => 'Unlock controls';
+
+  @override
+  String get playerVideoFit => 'Change video fit';
+
+  @override
+  String get playerMore => 'More options';
+
+  @override
+  String get playerUnmute => 'Unmute';
+
+  @override
   String get playerSeek => 'Seek';
 
   @override

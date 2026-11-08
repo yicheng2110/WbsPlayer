@@ -12,11 +12,14 @@ class PlayerGestureLayer extends StatefulWidget {
     required this.onVolumeChanged,
     required this.onTap,
     required this.onDoubleTap,
+    this.locked = false,
     this.onPreviewChanged,
     this.onActivity,
+    this.onInteractionChanged,
     this.text,
   });
 
+  final bool locked;
   final Duration duration;
   final Duration position;
   final double volume;
@@ -26,6 +29,7 @@ class PlayerGestureLayer extends StatefulWidget {
   final VoidCallback onDoubleTap;
   final ValueChanged<Duration?>? onPreviewChanged;
   final VoidCallback? onActivity;
+  final ValueChanged<bool>? onInteractionChanged;
   final String Function(String key)? text;
 
   @override
@@ -40,6 +44,8 @@ class _PlayerGestureLayerState extends State<PlayerGestureLayer> {
   bool _isVerticalAdjust = false;
   bool _adjustBrightness = false;
   double? _brightness;
+  Future<double>? _brightnessRead;
+  int _gestureGeneration = 0;
   String? _indicator;
 
   String _text(String key, String fallback) =>
@@ -50,10 +56,15 @@ class _PlayerGestureLayerState extends State<PlayerGestureLayer> {
     builder: (context, constraints) => GestureDetector(
       behavior: HitTestBehavior.translucent,
       onTap: widget.onTap,
-      onDoubleTap: widget.onDoubleTap,
-      onPanStart: (details) => _onPanStart(details, constraints.biggest),
-      onPanUpdate: (details) => _onPanUpdate(details, constraints.biggest),
-      onPanEnd: (_) => _onPanEnd(),
+      onDoubleTap: widget.locked ? null : widget.onDoubleTap,
+      onPanStart: widget.locked
+          ? null
+          : (details) => _onPanStart(details, constraints.biggest),
+      onPanUpdate: widget.locked
+          ? null
+          : (details) => _onPanUpdate(details, constraints.biggest),
+      onPanEnd: widget.locked ? null : (_) => _onPanEnd(),
+      onPanCancel: widget.locked ? null : _cancelPan,
       child: Stack(
         fit: StackFit.expand,
         children: [
@@ -82,6 +93,8 @@ class _PlayerGestureLayerState extends State<PlayerGestureLayer> {
   );
 
   void _onPanStart(DragStartDetails details, Size size) {
+    _gestureGeneration++;
+    widget.onInteractionChanged?.call(true);
     widget.onActivity?.call();
     _start = details.localPosition;
     _startValue = 0;
@@ -94,22 +107,29 @@ class _PlayerGestureLayerState extends State<PlayerGestureLayer> {
 
   Future<void> _onPanUpdate(DragUpdateDetails details, Size size) async {
     final start = _start;
-    if (start == null) return;
+    final generation = _gestureGeneration;
+    if (start == null || widget.locked) return;
+    widget.onActivity?.call();
     final delta = details.localPosition - start;
     if (!_isHorizontalSeek && !_isVerticalAdjust) {
       if (delta.distance < 12) return;
       _isHorizontalSeek = delta.dx.abs() > delta.dy.abs();
       _isVerticalAdjust = !_isHorizontalSeek;
-      if (_isVerticalAdjust && _adjustBrightness) {
-        try {
-          _brightness ??= await ScreenBrightness().application;
-        } catch (_) {
-          _brightness ??= 0.5;
+      if (_isVerticalAdjust) {
+        if (_adjustBrightness) {
+          // The system brightness read below is asynchronous; do not apply a
+          // guessed baseline while the finger is still moving.
+          _startValue = _brightness == null ? 0 : _brightness! * 100;
+        } else {
+          _startValue = widget.volume;
         }
-        _startValue = _brightness! * 100;
-      } else if (_isVerticalAdjust) {
-        _startValue = widget.volume;
       }
+    }
+    if (_isVerticalAdjust && _adjustBrightness && _brightness == null) {
+      final brightness = await (_brightnessRead ??= _readBrightness());
+      if (!mounted || generation != _gestureGeneration || widget.locked) return;
+      _brightness ??= brightness;
+      _startValue = brightness * 100;
     }
     if (_isHorizontalSeek) {
       final seconds = delta.dx / size.width * 120;
@@ -146,13 +166,29 @@ class _PlayerGestureLayerState extends State<PlayerGestureLayer> {
     }
   }
 
+  Future<double> _readBrightness() async {
+    try {
+      return await ScreenBrightness().application;
+    } catch (_) {
+      return 0.5;
+    }
+  }
+
   void _onPanEnd() {
     if (_isHorizontalSeek && _preview != null) widget.onSeek(_preview!);
+    _cancelPan();
+  }
+
+  void _cancelPan() {
+    _gestureGeneration++;
+    widget.onInteractionChanged?.call(false);
+    widget.onActivity?.call();
     widget.onPreviewChanged?.call(null);
     _start = null;
     _preview = null;
     _isHorizontalSeek = false;
     _isVerticalAdjust = false;
+    if (!mounted) return;
     setState(() => _indicator = null);
   }
 

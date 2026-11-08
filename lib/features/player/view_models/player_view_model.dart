@@ -308,7 +308,9 @@ class PlayerViewModel extends ChangeNotifier {
       _isMuted = volume == 0;
       notifyListeners();
     });
-    _listen<double>(_engine.rate, (_) {
+    _listen<double>(_engine.rate, (rate) {
+      _state = _state.copyWith(rate: rate);
+      notifyListeners();
       unawaited(_reportProgress(force: true));
     });
     _listen<bool>(_engine.playing, (isPlaying) {

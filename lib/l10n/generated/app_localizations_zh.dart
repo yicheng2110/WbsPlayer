@@ -344,6 +344,27 @@ class AppLocalizationsZh extends AppLocalizations {
   String get playerSpeed => '播放速度';
 
   @override
+  String get playerSpeedIncrease => '加快播放速度';
+
+  @override
+  String get playerSpeedDecrease => '减慢播放速度';
+
+  @override
+  String get playerLockControls => '锁定控制';
+
+  @override
+  String get playerUnlockControls => '解锁控制';
+
+  @override
+  String get playerVideoFit => '切换画面比例';
+
+  @override
+  String get playerMore => '更多选项';
+
+  @override
+  String get playerUnmute => '取消静音';
+
+  @override
   String get playerSeek => '进度';
 
   @override
