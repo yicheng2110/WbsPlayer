@@ -1,0 +1,30 @@
+name: Warm Gradle Cache
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  cache-android-gradle:
+    name: Cache Android Gradle distribution
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle cache
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Download and cache the Gradle Wrapper distribution
+        working-directory: android
+        run: ./gradlew --version
