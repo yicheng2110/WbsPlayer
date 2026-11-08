@@ -76,6 +76,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get cancel => '取消';
 
   @override
+  String get done => '完成';
+
+  @override
   String get add => '添加';
 
   @override
@@ -122,6 +125,24 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get homeLibraries => '媒体库';
+
+  @override
+  String get libraryManage => '管理媒体库';
+
+  @override
+  String get libraryManageTitle => '媒体库管理';
+
+  @override
+  String get libraryShowOnHome => '在首页展示';
+
+  @override
+  String get libraryOrderHandle => '调整媒体库顺序';
+
+  @override
+  String get libraryManageUnavailable => '此服务器暂不支持媒体库管理。';
+
+  @override
+  String get libraryPreferencesSaveFailed => '媒体库设置保存失败。';
 
   @override
   String get homeLoading => '正在加载媒体库…';

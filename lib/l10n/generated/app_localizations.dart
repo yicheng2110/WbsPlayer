@@ -230,6 +230,12 @@ abstract class AppLocalizations {
   /// **'取消'**
   String get cancel;
 
+  /// No description provided for @done.
+  ///
+  /// In zh, this message translates to:
+  /// **'完成'**
+  String get done;
+
   /// No description provided for @add.
   ///
   /// In zh, this message translates to:
@@ -325,6 +331,42 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'媒体库'**
   String get homeLibraries;
+
+  /// No description provided for @libraryManage.
+  ///
+  /// In zh, this message translates to:
+  /// **'管理媒体库'**
+  String get libraryManage;
+
+  /// No description provided for @libraryManageTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'媒体库管理'**
+  String get libraryManageTitle;
+
+  /// No description provided for @libraryShowOnHome.
+  ///
+  /// In zh, this message translates to:
+  /// **'在首页展示'**
+  String get libraryShowOnHome;
+
+  /// No description provided for @libraryOrderHandle.
+  ///
+  /// In zh, this message translates to:
+  /// **'调整媒体库顺序'**
+  String get libraryOrderHandle;
+
+  /// No description provided for @libraryManageUnavailable.
+  ///
+  /// In zh, this message translates to:
+  /// **'此服务器暂不支持媒体库管理。'**
+  String get libraryManageUnavailable;
+
+  /// No description provided for @libraryPreferencesSaveFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'媒体库设置保存失败。'**
+  String get libraryPreferencesSaveFailed;
 
   /// No description provided for @homeLoading.
   ///

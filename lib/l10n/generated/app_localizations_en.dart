@@ -79,6 +79,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cancel => 'Cancel';
 
   @override
+  String get done => 'Done';
+
+  @override
   String get add => 'Add';
 
   @override
@@ -129,6 +132,26 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get homeLibraries => 'Libraries';
+
+  @override
+  String get libraryManage => 'Manage libraries';
+
+  @override
+  String get libraryManageTitle => 'Manage libraries';
+
+  @override
+  String get libraryShowOnHome => 'Show on home';
+
+  @override
+  String get libraryOrderHandle => 'Reorder library';
+
+  @override
+  String get libraryManageUnavailable =>
+      'Library management is unavailable for this server.';
+
+  @override
+  String get libraryPreferencesSaveFailed =>
+      'Could not save library preferences.';
 
   @override
   String get homeLoading => 'Loading your library…';

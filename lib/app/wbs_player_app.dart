@@ -9,15 +9,18 @@ import 'package:url_launcher/url_launcher.dart';
 import '../features/player/models/player_preferences.dart';
 import '../features/player/services/player_preferences_store.dart';
 import '../features/player/views/player_page.dart';
+import '../features/servers/models/emby_library_preferences.dart';
 import '../features/servers/models/emby_media.dart';
 import '../features/servers/models/emby_media_detail.dart';
 import '../features/servers/models/emby_server.dart';
 import '../features/servers/repositories/drift_server_repository.dart';
 import '../features/servers/repositories/server_repository.dart';
+import '../features/servers/services/emby_library_preferences_store.dart';
 import '../features/servers/services/emby_library_service.dart';
 import '../features/servers/services/emby_media_detail_service.dart';
 import '../features/servers/services/emby_server_service.dart';
 import '../features/servers/views/emby_home_page.dart';
+import '../features/servers/views/emby_library_management_page.dart';
 import '../features/servers/views/emby_library_page.dart';
 import '../features/servers/views/emby_media_detail_page.dart';
 import '../features/servers/views/emby_season_page.dart';
@@ -35,6 +38,18 @@ class _LibraryRouteArgs {
 
   final EmbyServer server;
   final EmbyLibrary library;
+}
+
+class _LibraryManagementRouteArgs {
+  const _LibraryManagementRouteArgs({
+    required this.server,
+    required this.libraries,
+    required this.preferences,
+  });
+
+  final EmbyServer server;
+  final List<EmbyLibrary> libraries;
+  final EmbyLibraryPreferences preferences;
 }
 
 class _MediaRouteArgs {
@@ -193,6 +208,7 @@ class WbsPlayerApp extends StatefulWidget {
     this.serverService,
     this.serverRepository,
     this.libraryService,
+    this.libraryPreferencesStore,
     this.localePreferenceStore,
     this.playerPreferencesStore,
   });
@@ -200,6 +216,7 @@ class WbsPlayerApp extends StatefulWidget {
   final EmbyServerService? serverService;
   final ServerRepository? serverRepository;
   final EmbyLibraryService? libraryService;
+  final EmbyLibraryPreferencesStore? libraryPreferencesStore;
   final LocalePreferenceStore? localePreferenceStore;
   final PlayerPreferencesStore? playerPreferencesStore;
 
@@ -225,6 +242,9 @@ class _WbsPlayerAppState extends State<WbsPlayerApp> {
   late final EmbyLibraryService _libraryService =
       widget.libraryService ?? EmbyLibraryService();
   late final bool _ownsLibraryService = widget.libraryService == null;
+  late final EmbyLibraryPreferencesStore _libraryPreferencesStore =
+      widget.libraryPreferencesStore ??
+      SharedPreferencesEmbyLibraryPreferencesStore();
   late final EmbyMediaDetailService _mediaDetailService =
       EmbyMediaDetailService();
   late final ServerRepository _serverRepository =
@@ -302,6 +322,18 @@ class _WbsPlayerAppState extends State<WbsPlayerApp> {
                   serverService: _serverService,
                   serverRepository: _serverRepository,
                   libraryService: _libraryService,
+                  libraryPreferencesStore: _libraryPreferencesStore,
+                  onLibraryManagementSelected:
+                      ({required libraries, required preferences}) async {
+                        await context.push<void>(
+                          '$serverPath/manage-libraries',
+                          extra: _LibraryManagementRouteArgs(
+                            server: server,
+                            libraries: libraries,
+                            preferences: preferences,
+                          ),
+                        );
+                      },
                   onLibrarySelected:
                       (library, {required userId, required accessToken}) {
                         context.push(
@@ -333,6 +365,49 @@ class _WbsPlayerAppState extends State<WbsPlayerApp> {
               },
             ),
             routes: [
+              GoRoute(
+                path: 'manage-libraries',
+                builder: (context, state) =>
+                    FutureBuilder<_LibraryManagementRouteArgs?>(
+                      future: _resolveLibraryManagementRoute(state),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState != ConnectionState.done) {
+                          return const Scaffold(
+                            body: Center(child: CircularProgressIndicator()),
+                          );
+                        }
+                        final args = snapshot.data;
+                        if (args == null) {
+                          return Scaffold(
+                            body: Center(
+                              child: Text(context.l10n.homeLoadFailed),
+                            ),
+                          );
+                        }
+                        return EmbyLibraryManagementPage(
+                          libraries: args.libraries,
+                          initialPreferences: args.preferences,
+                          onPreferencesChanged: (preferences) async {
+                            try {
+                              await _libraryPreferencesStore.write(
+                                args.server.serverId,
+                                preferences,
+                              );
+                            } catch (_) {
+                              if (!context.mounted) return;
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    context.l10n.libraryPreferencesSaveFailed,
+                                  ),
+                                ),
+                              );
+                            }
+                          },
+                        );
+                      },
+                    ),
+              ),
               GoRoute(
                 path: 'library/:libraryId',
                 builder: (context, state) => FutureBuilder<_LibraryRouteArgs?>(
@@ -566,6 +641,7 @@ class _WbsPlayerAppState extends State<WbsPlayerApp> {
     final server = switch (extra) {
       EmbyServer value => value,
       _LibraryRouteArgs value => value.server,
+      _LibraryManagementRouteArgs value => value.server,
       _MediaRouteArgs value => value.server,
       _SeasonRouteArgs value => value.server,
       _ => null,
@@ -579,6 +655,35 @@ class _WbsPlayerAppState extends State<WbsPlayerApp> {
       }
     }
     return null;
+  }
+
+  Future<_LibraryManagementRouteArgs?> _resolveLibraryManagementRoute(
+    GoRouterState state,
+  ) async {
+    final extra = state.extra;
+    if (extra is _LibraryManagementRouteArgs) return extra;
+    final server = await _resolveServer(state);
+    if (server == null) return null;
+    final activeServer = server.userId == null || server.userId!.isEmpty
+        ? await _authenticateServer(server)
+        : server;
+    final userId = activeServer.userId;
+    if (userId == null || userId.isEmpty) return null;
+    final libraries = await _libraryService.loadLibraries(
+      serverAddress: activeServer.address,
+      accessToken: activeServer.accessToken,
+      userId: userId,
+    );
+    final preferences = await _libraryPreferencesStore.read(
+      activeServer.serverId,
+    );
+    return _LibraryManagementRouteArgs(
+      server: activeServer,
+      libraries: libraries,
+      preferences: preferences.normalize(
+        libraries.map((library) => library.id),
+      ),
+    );
   }
 
   Future<_LibraryRouteArgs?> _resolveLibraryRoute(GoRouterState state) async {

@@ -217,6 +217,7 @@ class LibraryListSection extends StatelessWidget {
     required this.service,
     this.onLibrarySelected,
     this.onMediaSelected,
+    this.onManageLibraries,
   });
 
   final List<EmbyLibrarySection> sections;
@@ -224,6 +225,7 @@ class LibraryListSection extends StatelessWidget {
   final EmbyLibraryService service;
   final ValueChanged<EmbyLibrary>? onLibrarySelected;
   final ValueChanged<EmbyLibraryItem>? onMediaSelected;
+  final VoidCallback? onManageLibraries;
 
   @override
   Widget build(BuildContext context) => Column(
@@ -231,13 +233,26 @@ class LibraryListSection extends StatelessWidget {
     children: [
       Padding(
         padding: const EdgeInsets.fromLTRB(20, 26, 20, 8),
-        child: Text(
-          context.l10n.homeLibraries,
-          style: const TextStyle(
-            color: AppColors.mediaInk,
-            fontSize: 23,
-            fontWeight: FontWeight.w700,
-          ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                context.l10n.homeLibraries,
+                style: const TextStyle(
+                  color: AppColors.mediaInk,
+                  fontSize: 23,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            if (onManageLibraries != null)
+              IconButton(
+                key: const Key('home-manage-libraries'),
+                tooltip: context.l10n.libraryManage,
+                onPressed: onManageLibraries,
+                icon: const Icon(Icons.tune),
+              ),
+          ],
         ),
       ),
       for (final section in sections)

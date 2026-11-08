@@ -1,14 +1,18 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../l10n/app_localizations_context.dart';
 import '../../../ui/core/app_colors.dart';
+import '../models/emby_library_preferences.dart';
 import '../models/emby_media.dart';
 import '../models/emby_server.dart';
 import '../repositories/server_repository.dart';
+import '../services/emby_library_preferences_store.dart';
 import '../services/emby_library_service.dart';
 import '../services/emby_server_service.dart';
 import '../widgets/emby_home_sections.dart';
+import 'emby_library_management_page.dart';
 import 'emby_library_page.dart';
 
 class EmbyHomePage extends StatefulWidget {
@@ -18,7 +22,9 @@ class EmbyHomePage extends StatefulWidget {
     this.serverService,
     this.serverRepository,
     this.libraryService,
+    this.libraryPreferencesStore,
     this.onLibrarySelected,
+    this.onLibraryManagementSelected,
     this.onMediaSelected,
   });
 
@@ -26,11 +32,44 @@ class EmbyHomePage extends StatefulWidget {
   final EmbyServerService? serverService;
   final ServerRepository? serverRepository;
   final EmbyLibraryService? libraryService;
+  final EmbyLibraryPreferencesStore? libraryPreferencesStore;
   final EmbyLibrarySelected? onLibrarySelected;
+  final EmbyLibraryManagementSelected? onLibraryManagementSelected;
   final EmbyMediaSelected? onMediaSelected;
 
   @override
   State<EmbyHomePage> createState() => _EmbyHomePageState();
+}
+
+class _HiddenLibrariesNotice extends StatelessWidget {
+  const _HiddenLibrariesNotice({required this.onManageLibraries});
+
+  final VoidCallback onManageLibraries;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.fromLTRB(20, 26, 20, 8),
+    child: Row(
+      children: [
+        Expanded(
+          child: Text(
+            context.l10n.homeLibraries,
+            style: const TextStyle(
+              color: AppColors.mediaInk,
+              fontSize: 23,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+        IconButton(
+          key: const Key('home-manage-libraries'),
+          tooltip: context.l10n.libraryManage,
+          onPressed: onManageLibraries,
+          icon: const Icon(Icons.tune),
+        ),
+      ],
+    ),
+  );
 }
 
 class _EmbyHomePageState extends State<EmbyHomePage> {
@@ -40,8 +79,14 @@ class _EmbyHomePageState extends State<EmbyHomePage> {
       widget.libraryService ?? EmbyLibraryService();
   late final bool _ownsServerService = widget.serverService == null;
   late final bool _ownsLibraryService = widget.libraryService == null;
+  late final EmbyLibraryPreferencesStore _libraryPreferencesStore =
+      widget.libraryPreferencesStore ??
+      SharedPreferencesEmbyLibraryPreferencesStore();
 
   EmbyHomeContent? _content;
+  EmbyLibraryPreferences _libraryPreferences = const EmbyLibraryPreferences();
+  List<EmbyLibrary> _libraries = const [];
+  Future<void> _preferenceSaveQueue = Future<void>.value();
   String? _contentUserId;
   String? _contentAccessToken;
   Object? _error;
@@ -93,11 +138,23 @@ class _EmbyHomePageState extends State<EmbyHomePage> {
         accessToken: accessToken,
         forceRefresh: _content != null,
       );
+      final serverKey = _libraryPreferencesKey;
+      final savedPreferences = await _readLibraryPreferences(serverKey);
+      final preferences = savedPreferences.normalize(
+        content.libraries.map((section) => section.library.id),
+      );
       if (!mounted || requestId != _requestId) return;
       setState(() {
         _content = content;
+        _libraries = content.libraries
+            .map((section) => section.library)
+            .toList(growable: false);
+        _libraryPreferences = preferences;
         _isLoading = false;
       });
+      if (!_samePreferences(savedPreferences, preferences)) {
+        await _writeLibraryPreferences(serverKey, preferences);
+      }
     } catch (error) {
       if (!mounted || requestId != _requestId) return;
       setState(() {
@@ -168,6 +225,86 @@ class _EmbyHomePageState extends State<EmbyHomePage> {
         ),
       ),
     );
+  }
+
+  String get _libraryPreferencesKey => widget.server.serverId;
+
+  bool _samePreferences(
+    EmbyLibraryPreferences first,
+    EmbyLibraryPreferences second,
+  ) =>
+      listEquals(first.order, second.order) &&
+      setEquals(first.hiddenLibraryIds, second.hiddenLibraryIds);
+
+  List<EmbyLibrarySection> _visibleLibrarySections(EmbyHomeContent content) {
+    final sectionsById = {
+      for (final section in content.libraries) section.library.id: section,
+    };
+    return [
+      for (final id in _libraryPreferences.visibleLibraryIds)
+        if (sectionsById[id] case final section?) section,
+    ];
+  }
+
+  Future<void> _manageLibraries() async {
+    final content = _content;
+    if (_libraries.isEmpty || content == null) return;
+    final callback = widget.onLibraryManagementSelected;
+    if (callback == null) {
+      await Navigator.of(context).push<void>(
+        MaterialPageRoute<void>(
+          builder: (_) => EmbyLibraryManagementPage(
+            libraries: _libraries,
+            initialPreferences: _libraryPreferences,
+            onPreferencesChanged: _saveLibraryPreferences,
+          ),
+        ),
+      );
+    } else {
+      await callback(libraries: _libraries, preferences: _libraryPreferences);
+    }
+    if (!mounted) return;
+    final updated = await _readLibraryPreferences(_libraryPreferencesKey);
+    final normalized = updated.normalize(
+      _libraries.map((library) => library.id),
+    );
+    setState(() => _libraryPreferences = normalized);
+  }
+
+  Future<void> _saveLibraryPreferences(EmbyLibraryPreferences preferences) {
+    final normalized = preferences.normalize(
+      _libraries.map((library) => library.id),
+    );
+    setState(() => _libraryPreferences = normalized);
+    final serverId = _libraryPreferencesKey;
+    _preferenceSaveQueue = _preferenceSaveQueue.then(
+      (_) => _writeLibraryPreferences(serverId, normalized),
+    );
+    return _preferenceSaveQueue;
+  }
+
+  Future<EmbyLibraryPreferences> _readLibraryPreferences(
+    String serverId,
+  ) async {
+    try {
+      return await _libraryPreferencesStore.read(serverId);
+    } catch (_) {
+      return const EmbyLibraryPreferences();
+    }
+  }
+
+  Future<void> _writeLibraryPreferences(
+    String serverId,
+    EmbyLibraryPreferences preferences,
+  ) async {
+    try {
+      await _libraryPreferencesStore.write(serverId, preferences);
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.l10n.libraryPreferencesSaveFailed)),
+      );
+    }
   }
 
   EmbyServer get _activeServer => widget.server.copyWith(
@@ -281,13 +418,18 @@ class _EmbyHomePageState extends State<EmbyHomePage> {
               ),
             if (content != null && content.libraries.isNotEmpty)
               SliverToBoxAdapter(
-                child: LibraryListSection(
-                  sections: content.libraries,
-                  server: _activeServer,
-                  service: _libraryService,
-                  onLibrarySelected: _openLibrary,
-                  onMediaSelected: _selectMedia,
-                ),
+                child: _visibleLibrarySections(content).isEmpty
+                    ? _HiddenLibrariesNotice(
+                        onManageLibraries: _manageLibraries,
+                      )
+                    : LibraryListSection(
+                        sections: _visibleLibrarySections(content),
+                        server: _activeServer,
+                        service: _libraryService,
+                        onLibrarySelected: _openLibrary,
+                        onManageLibraries: _manageLibraries,
+                        onMediaSelected: _selectMedia,
+                      ),
               ),
           ],
           const SliverToBoxAdapter(child: SizedBox(height: 40)),

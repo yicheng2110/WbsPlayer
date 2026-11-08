@@ -1,3 +1,5 @@
+import 'emby_library_preferences.dart';
+
 typedef EmbyMediaSelected = void Function(
   EmbyLibraryItem item, {
   required String userId,
@@ -8,6 +10,11 @@ typedef EmbyLibrarySelected = void Function(
   EmbyLibrary library, {
   required String userId,
   required String accessToken,
+});
+
+typedef EmbyLibraryManagementSelected = Future<void> Function({
+  required List<EmbyLibrary> libraries,
+  required EmbyLibraryPreferences preferences,
 });
 
 class EmbyLibraryItem {
