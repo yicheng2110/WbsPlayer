@@ -84,7 +84,7 @@ void main() {
     expect(itemsRequest.url.queryParameters['IncludeItemTypes'], 'Series');
   });
 
-  test('loads only movies from a movie library', () async {
+  test('searches a movie library and only returns movies', () async {
     final requests = <http.Request>[];
     final service = EmbyLibraryService(
       client: MockClient((request) async {
@@ -111,6 +111,7 @@ void main() {
       userId: 'user-1',
       parentId: 'movie-library',
       collectionType: 'movies',
+      searchTerm: '  Dune  ',
       sortBy: EmbyLibrarySort.title,
       ascending: true,
       startIndex: 0,
@@ -119,6 +120,7 @@ void main() {
     expect(page.items.map((item) => item.type), ['Movie']);
     final request = requests.single;
     expect(request.url.queryParameters['IncludeItemTypes'], 'Movie');
+    expect(request.url.queryParameters['SearchTerm'], 'Dune');
   });
 
   test('caches library item pages and refresh bypasses the cache', () async {

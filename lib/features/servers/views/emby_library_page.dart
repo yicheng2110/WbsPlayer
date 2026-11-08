@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../../l10n/app_localizations_context.dart';
@@ -36,11 +38,16 @@ class _EmbyLibraryPageState extends State<EmbyLibraryPage> {
   static const _sortOptions = EmbyLibrarySort.values;
 
   final _scrollController = ScrollController();
+  final _searchController = TextEditingController();
+  final _searchFocusNode = FocusNode();
   final List<EmbyLibraryItem> _items = [];
   EmbyLibrarySort _sortBy = EmbyLibrarySort.dateCreated;
   bool _ascending = false;
   bool _isLoading = true;
   bool _isLoadingMore = false;
+  bool _isSearchOpen = false;
+  String _searchTerm = '';
+  Timer? _searchDebounce;
   Object? _error;
   int _totalRecordCount = 0;
   int _requestId = 0;
@@ -61,6 +68,9 @@ class _EmbyLibraryPageState extends State<EmbyLibraryPage> {
 
   @override
   void dispose() {
+    _searchDebounce?.cancel();
+    _searchController.dispose();
+    _searchFocusNode.dispose();
     _scrollController
       ..removeListener(_onScroll)
       ..dispose();
@@ -180,6 +190,7 @@ class _EmbyLibraryPageState extends State<EmbyLibraryPage> {
             : _sortBy,
         ascending: _sortBy == EmbyLibrarySort.random ? true : _ascending,
         startIndex: startIndex,
+        searchTerm: _searchTerm,
         limit: _pageSize,
         forceRefresh: forceRefresh,
       );
@@ -197,6 +208,7 @@ class _EmbyLibraryPageState extends State<EmbyLibraryPage> {
             : _sortBy,
         ascending: _sortBy == EmbyLibrarySort.random ? true : _ascending,
         startIndex: startIndex,
+        searchTerm: _searchTerm,
         limit: _pageSize,
         forceRefresh: forceRefresh,
       );
@@ -239,6 +251,38 @@ class _EmbyLibraryPageState extends State<EmbyLibraryPage> {
     _loadFirstPage();
   }
 
+  void _onSearchChanged(String value) {
+    _searchDebounce?.cancel();
+    setState(() {});
+    _searchDebounce = Timer(const Duration(milliseconds: 350), () {
+      if (!mounted) return;
+      final searchTerm = value.trim();
+      if (searchTerm == _searchTerm) return;
+      setState(() => _searchTerm = searchTerm);
+      _loadFirstPage();
+    });
+  }
+
+  void _submitSearch(String value) {
+    _searchDebounce?.cancel();
+    final searchTerm = value.trim();
+    if (searchTerm == _searchTerm) return;
+    setState(() => _searchTerm = searchTerm);
+    _loadFirstPage();
+  }
+
+  void _closeSearch() {
+    _searchDebounce?.cancel();
+    final hadSearchTerm = _searchTerm.isNotEmpty;
+    _searchController.clear();
+    _searchFocusNode.unfocus();
+    setState(() {
+      _isSearchOpen = false;
+      _searchTerm = '';
+    });
+    if (hadSearchTerm) _loadFirstPage();
+  }
+
   String _sortLabel(BuildContext context, EmbyLibrarySort sort) {
     final l10n = context.l10n;
     return switch (sort) {
@@ -266,43 +310,89 @@ class _EmbyLibraryPageState extends State<EmbyLibraryPage> {
         backgroundColor: AppColors.mediaBackground,
         foregroundColor: AppColors.mediaInk,
         surfaceTintColor: Colors.transparent,
-        title: Text(widget.library.name),
+        title: _isSearchOpen
+            ? TextField(
+                key: const Key('emby-library-search-field'),
+                controller: _searchController,
+                focusNode: _searchFocusNode,
+                onChanged: _onSearchChanged,
+                onSubmitted: _submitSearch,
+                textInputAction: TextInputAction.search,
+                style: const TextStyle(color: AppColors.mediaInk),
+                decoration: InputDecoration(
+                  hintText: l10n.librarySearchHint,
+                  hintStyle: const TextStyle(color: AppColors.mediaMuted),
+                  border: InputBorder.none,
+                ),
+              )
+            : Text(widget.library.name),
         leading: IconButton(
           tooltip: MaterialLocalizations.of(context).backButtonTooltip,
           onPressed: () => Navigator.of(context).maybePop(),
           icon: const Icon(Icons.arrow_back),
         ),
         actions: [
-          PopupMenuButton<EmbyLibrarySort>(
-            tooltip: l10n.librarySort,
-            initialValue: _sortBy,
-            onSelected: _selectSort,
-            itemBuilder: (context) => [
-              for (final sort in _sortOptions)
-                PopupMenuItem<EmbyLibrarySort>(
-                  value: sort,
-                  enabled: sort.apiValue != null,
-                  child: Row(
-                    children: [
-                      Expanded(child: Text(_sortLabel(context, sort))),
-                      if (sort.apiValue == null)
-                        Text(
-                          l10n.librarySortUnsupported,
-                          style: Theme.of(context).textTheme.labelSmall,
-                        ),
-                    ],
-                  ),
-                ),
-            ],
-            icon: const Icon(Icons.sort),
-          ),
           IconButton(
-            tooltip: _ascending
-                ? l10n.librarySortAscending
-                : l10n.librarySortDescending,
-            onPressed: _toggleDirection,
-            icon: Icon(_ascending ? Icons.arrow_upward : Icons.arrow_downward),
+            key: const Key('emby-library-search-button'),
+            tooltip: _isSearchOpen
+                ? l10n.librarySearchClose
+                : l10n.librarySearch,
+            onPressed: () {
+              if (_isSearchOpen) {
+                _closeSearch();
+                return;
+              }
+              setState(() => _isSearchOpen = true);
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted) _searchFocusNode.requestFocus();
+              });
+            },
+            icon: Icon(_isSearchOpen ? Icons.close : Icons.search),
           ),
+          if (_isSearchOpen && _searchController.text.isNotEmpty)
+            IconButton(
+              key: const Key('emby-library-search-clear-button'),
+              tooltip: l10n.librarySearchClear,
+              onPressed: () {
+                _searchController.clear();
+                _submitSearch('');
+              },
+              icon: const Icon(Icons.clear),
+            ),
+          if (!_isSearchOpen)
+            PopupMenuButton<EmbyLibrarySort>(
+              tooltip: l10n.librarySort,
+              initialValue: _sortBy,
+              onSelected: _selectSort,
+              itemBuilder: (context) => [
+                for (final sort in _sortOptions)
+                  PopupMenuItem<EmbyLibrarySort>(
+                    value: sort,
+                    enabled: sort.apiValue != null,
+                    child: Row(
+                      children: [
+                        Expanded(child: Text(_sortLabel(context, sort))),
+                        if (sort.apiValue == null)
+                          Text(
+                            l10n.librarySortUnsupported,
+                            style: Theme.of(context).textTheme.labelSmall,
+                          ),
+                      ],
+                    ),
+                  ),
+              ],
+              icon: const Icon(Icons.sort),
+            ),
+          if (!_isSearchOpen)
+            IconButton(
+              tooltip: _ascending
+                  ? l10n.librarySortAscending
+                  : l10n.librarySortDescending,
+              onPressed: _toggleDirection,
+              icon: Icon(
+                _ascending ? Icons.arrow_upward : Icons.arrow_downward,
+              ),
+            ),
           const SizedBox(width: 8),
         ],
       ),
@@ -335,7 +425,15 @@ class _EmbyLibraryPageState extends State<EmbyLibraryPage> {
         ),
       );
     }
-    if (_items.isEmpty) return Center(child: Text(context.l10n.homeNoItems));
+    if (_items.isEmpty) {
+      return Center(
+        child: Text(
+          _searchTerm.isEmpty
+              ? context.l10n.homeNoItems
+              : context.l10n.librarySearchNoResults,
+        ),
+      );
+    }
 
     return RefreshIndicator(
       onRefresh: () => _loadFirstPage(forceRefresh: true),

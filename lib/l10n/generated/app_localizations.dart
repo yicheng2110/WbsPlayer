@@ -356,6 +356,36 @@ abstract class AppLocalizations {
   /// **'查看全部'**
   String get homeViewAll;
 
+  /// No description provided for @librarySearch.
+  ///
+  /// In zh, this message translates to:
+  /// **'搜索此媒体库'**
+  String get librarySearch;
+
+  /// No description provided for @librarySearchClose.
+  ///
+  /// In zh, this message translates to:
+  /// **'关闭搜索'**
+  String get librarySearchClose;
+
+  /// No description provided for @librarySearchClear.
+  ///
+  /// In zh, this message translates to:
+  /// **'清除搜索'**
+  String get librarySearchClear;
+
+  /// No description provided for @librarySearchHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'搜索电影或剧集'**
+  String get librarySearchHint;
+
+  /// No description provided for @librarySearchNoResults.
+  ///
+  /// In zh, this message translates to:
+  /// **'没有找到匹配的电影或剧集'**
+  String get librarySearchNoResults;
+
   /// No description provided for @librarySort.
   ///
   /// In zh, this message translates to:

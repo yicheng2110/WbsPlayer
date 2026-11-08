@@ -147,6 +147,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeViewAll => 'View all';
 
   @override
+  String get librarySearch => 'Search this library';
+
+  @override
+  String get librarySearchClose => 'Close search';
+
+  @override
+  String get librarySearchClear => 'Clear search';
+
+  @override
+  String get librarySearchHint => 'Search movies and series';
+
+  @override
+  String get librarySearchNoResults => 'No matching movies or series';
+
+  @override
   String get librarySort => 'Sort by';
 
   @override

@@ -204,6 +204,7 @@ class EmbyLibraryService {
     required bool ascending,
     required int startIndex,
     String? collectionType,
+    String? searchTerm,
     int limit = 40,
     bool forceRefresh = false,
   }) async {
@@ -214,6 +215,7 @@ class EmbyLibraryService {
       'tvshows' => const ['Series'],
       _ => const ['Movie', 'Series'],
     };
+    final normalizedSearchTerm = searchTerm?.trim() ?? '';
     final payload = await _getPayload(
       serverAddress: serverAddress,
       accessToken: accessToken,
@@ -228,6 +230,7 @@ class EmbyLibraryService {
         'SortBy': apiSort,
         'SortOrder': ascending ? 'Ascending' : 'Descending',
         'IncludeItemTypes': expectedItemTypes.join(','),
+        if (normalizedSearchTerm.isNotEmpty) 'SearchTerm': normalizedSearchTerm,
         'Fields': 'ProductionYear,Overview',
         'EnableImages': 'true',
         'EnableUserData': 'true',

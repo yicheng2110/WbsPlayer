@@ -139,6 +139,21 @@ class AppLocalizationsZh extends AppLocalizations {
   String get homeViewAll => '查看全部';
 
   @override
+  String get librarySearch => '搜索此媒体库';
+
+  @override
+  String get librarySearchClose => '关闭搜索';
+
+  @override
+  String get librarySearchClear => '清除搜索';
+
+  @override
+  String get librarySearchHint => '搜索电影或剧集';
+
+  @override
+  String get librarySearchNoResults => '没有找到匹配的电影或剧集';
+
+  @override
   String get librarySort => '排序方式';
 
   @override
