@@ -36,6 +36,23 @@ jobs:
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.3.1'
+          cache-read-only: false
+
+      - name: Prewarm Gradle Wrapper distribution
+        working-directory: android
+        shell: bash
+        run: |
+          for attempt in 1 2 3; do
+            if ./gradlew --version; then
+              exit 0
+            fi
+            echo "Gradle download attempt $attempt failed; retrying in 15 seconds..."
+            sleep 15
+          done
+          echo "Unable to download the Gradle distribution after 3 attempts." >&2
+          exit 1
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
