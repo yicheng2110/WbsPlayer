@@ -776,6 +776,18 @@ abstract class AppLocalizations {
   /// **'切换画面比例'**
   String get playerVideoFit;
 
+  /// No description provided for @playerLandscape.
+  ///
+  /// In zh, this message translates to:
+  /// **'切换横屏'**
+  String get playerLandscape;
+
+  /// No description provided for @playerPortrait.
+  ///
+  /// In zh, this message translates to:
+  /// **'切换竖屏'**
+  String get playerPortrait;
+
   /// No description provided for @playerMore.
   ///
   /// In zh, this message translates to:
@@ -848,6 +860,12 @@ abstract class AppLocalizations {
   /// **'播放画质'**
   String get playerQuality;
 
+  /// No description provided for @playerSettings.
+  ///
+  /// In zh, this message translates to:
+  /// **'播放器设置'**
+  String get playerSettings;
+
   /// No description provided for @playerQualityOriginal.
   ///
   /// In zh, this message translates to:
@@ -883,6 +901,30 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'硬件解码'**
   String get playerHardwareAcceleration;
+
+  /// No description provided for @playerCache.
+  ///
+  /// In zh, this message translates to:
+  /// **'播放缓存'**
+  String get playerCache;
+
+  /// No description provided for @playerCacheDescription.
+  ///
+  /// In zh, this message translates to:
+  /// **'播放时使用磁盘缓存'**
+  String get playerCacheDescription;
+
+  /// No description provided for @playerCacheSize.
+  ///
+  /// In zh, this message translates to:
+  /// **'缓存大小'**
+  String get playerCacheSize;
+
+  /// No description provided for @playerCacheSizeValue.
+  ///
+  /// In zh, this message translates to:
+  /// **'{size} MB'**
+  String playerCacheSizeValue(int size);
 
   /// No description provided for @playerNextEpisode.
   ///

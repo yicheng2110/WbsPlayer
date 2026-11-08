@@ -22,6 +22,8 @@ class PlayerOsdControls extends StatefulWidget {
     this.onRateChanged,
     this.onLockChanged,
     this.onFit,
+    this.onRotate,
+    this.isLandscape = false,
     this.onMute,
     this.onStats,
     this.onActivity,
@@ -44,6 +46,8 @@ class PlayerOsdControls extends StatefulWidget {
   final ValueChanged<double>? onRateChanged;
   final ValueChanged<bool>? onLockChanged;
   final VoidCallback? onFit;
+  final FutureOr<void> Function()? onRotate;
+  final bool isLandscape;
   final VoidCallback? onMute;
   final VoidCallback? onStats;
   final VoidCallback? onActivity;
@@ -191,7 +195,8 @@ class PlayerOsdControlsState extends State<PlayerOsdControls> {
                           left: inset - 8,
                           right: inset - 8,
                           child: _buildTopBar(
-                            constraints.maxWidth >= 320 &&
+                            constraints.maxWidth >=
+                                    (widget.onRotate == null ? 320 : 380) &&
                                 MediaQuery.textScalerOf(context).scale(18) <=
                                     24,
                           ),
@@ -285,6 +290,17 @@ class PlayerOsdControlsState extends State<PlayerOsdControls> {
           tooltip: _l10n.playerVideoFit,
           icon: Icons.fit_screen_outlined,
           onPressed: () => _run(widget.onFit!),
+        ),
+      if (widget.onRotate != null)
+        _button(
+          key: const Key('player-rotate'),
+          tooltip: widget.isLandscape
+              ? _l10n.playerPortrait
+              : _l10n.playerLandscape,
+          icon: widget.isLandscape
+              ? Icons.screen_lock_portrait_rounded
+              : Icons.screen_rotation_rounded,
+          onPressed: () => _run(widget.onRotate!),
         ),
       PopupMenuButton<_PlayerMenuAction>(
         key: const Key('player-more'),

@@ -3,12 +3,23 @@ import 'package:flutter/foundation.dart';
 /// User-configurable playback defaults shared by settings and the player.
 @immutable
 class PlayerPreferences {
+  static const minCacheSizeMb = 2;
+  static const maxCacheSizeMb = 1024;
+  static const defaultCacheSizeMb = 64;
+
+  static int normalizeCacheSizeMb(int value) {
+    final clamped = value.clamp(minCacheSizeMb, maxCacheSizeMb).toInt();
+    return clamped.isEven ? clamped : clamped - 1;
+  }
+
   const PlayerPreferences({
     this.maxStreamingBitrate,
     this.subtitleLanguage = '',
     this.subtitleFontSize = 32,
     this.audioPassthrough = false,
     this.hardwareAcceleration = true,
+    this.cacheEnabled = true,
+    this.cacheSizeMb = defaultCacheSizeMb,
   });
 
   /// `null` means original quality; non-null values are bits per second.
@@ -17,11 +28,14 @@ class PlayerPreferences {
   final double subtitleFontSize;
   final bool audioPassthrough;
   final bool hardwareAcceleration;
+  final bool cacheEnabled;
+  final int cacheSizeMb;
 
   factory PlayerPreferences.fromJson(Map<String, dynamic> json) {
     final bitrate = json['maxStreamingBitrate'];
     final fontSize = json['subtitleFontSize'];
     final language = json['subtitleLanguage'];
+    final cacheSizeMb = json['cacheSizeMb'];
     return PlayerPreferences(
       maxStreamingBitrate: bitrate is int && bitrate > 0 ? bitrate : null,
       subtitleLanguage: language is String ? language : '',
@@ -30,6 +44,10 @@ class PlayerPreferences {
           : 32,
       audioPassthrough: json['audioPassthrough'] == true,
       hardwareAcceleration: json['hardwareAcceleration'] != false,
+      cacheEnabled: json['cacheEnabled'] != false,
+      cacheSizeMb: cacheSizeMb is num
+          ? normalizeCacheSizeMb(cacheSizeMb.round())
+          : defaultCacheSizeMb,
     );
   }
 
@@ -39,6 +57,8 @@ class PlayerPreferences {
     double? subtitleFontSize,
     bool? audioPassthrough,
     bool? hardwareAcceleration,
+    bool? cacheEnabled,
+    int? cacheSizeMb,
     bool clearMaxStreamingBitrate = false,
   }) => PlayerPreferences(
     maxStreamingBitrate: clearMaxStreamingBitrate
@@ -48,6 +68,8 @@ class PlayerPreferences {
     subtitleFontSize: subtitleFontSize ?? this.subtitleFontSize,
     audioPassthrough: audioPassthrough ?? this.audioPassthrough,
     hardwareAcceleration: hardwareAcceleration ?? this.hardwareAcceleration,
+    cacheEnabled: cacheEnabled ?? this.cacheEnabled,
+    cacheSizeMb: normalizeCacheSizeMb(cacheSizeMb ?? this.cacheSizeMb),
   );
 
   Map<String, dynamic> toJson() => {
@@ -56,5 +78,7 @@ class PlayerPreferences {
     'subtitleFontSize': subtitleFontSize,
     'audioPassthrough': audioPassthrough,
     'hardwareAcceleration': hardwareAcceleration,
+    'cacheEnabled': cacheEnabled,
+    'cacheSizeMb': cacheSizeMb,
   };
 }

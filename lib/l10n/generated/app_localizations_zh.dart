@@ -359,6 +359,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get playerVideoFit => '切换画面比例';
 
   @override
+  String get playerLandscape => '切换横屏';
+
+  @override
+  String get playerPortrait => '切换竖屏';
+
+  @override
   String get playerMore => '更多选项';
 
   @override
@@ -395,6 +401,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get playerQuality => '播放画质';
 
   @override
+  String get playerSettings => '播放器设置';
+
+  @override
   String get playerQualityOriginal => '原画';
 
   @override
@@ -411,6 +420,20 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get playerHardwareAcceleration => '硬件解码';
+
+  @override
+  String get playerCache => '播放缓存';
+
+  @override
+  String get playerCacheDescription => '播放时使用磁盘缓存';
+
+  @override
+  String get playerCacheSize => '缓存大小';
+
+  @override
+  String playerCacheSizeValue(int size) {
+    return '$size MB';
+  }
 
   @override
   String get playerNextEpisode => '下一集';

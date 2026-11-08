@@ -25,6 +25,7 @@ void main() {
           state: const PlayerSessionState(duration: Duration(hours: 2)),
           onRateChanged: (_) {},
           onFit: () {},
+          onRotate: () {},
           canPlayNext: true,
         ),
       );
@@ -40,6 +41,7 @@ void main() {
         'player-audio',
         'player-subtitles',
         'player-more',
+        'player-rotate',
       ]) {
         final rect = tester.getRect(find.byKey(Key(key)));
         expect(rect.left, greaterThanOrEqualTo(0));
@@ -141,6 +143,19 @@ void main() {
     rate = null;
     await tester.tap(find.byKey(const Key('player-speed-increase')));
     expect(rate, isNull);
+  });
+
+  testWidgets('rotates through the control and hides it when locked', (
+    tester,
+  ) async {
+    var rotations = 0;
+    await tester.pumpWidget(_player(onRotate: () => rotations++));
+    expect(find.byTooltip('Switch to landscape'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('player-rotate')));
+    expect(rotations, 1);
+    await tester.tap(find.byKey(const Key('player-lock')));
+    await tester.pump();
+    expect(find.byKey(const Key('player-rotate')), findsNothing);
   });
 
   testWidgets('locks controls and keeps unlock reachable after auto-hide', (
@@ -359,6 +374,7 @@ Widget _player({
   ValueChanged<bool>? onLockChanged,
   ValueChanged<Duration>? onSeek,
   VoidCallback? onFit,
+  FutureOr<void> Function()? onRotate,
   VoidCallback? onStats,
   bool canPlayNext = false,
   Locale locale = const Locale('en'),
@@ -390,6 +406,7 @@ Widget _player({
       onRateChanged: onRateChanged,
       onLockChanged: onLockChanged,
       onFit: onFit,
+      onRotate: onRotate,
       onStats: onStats,
       canPlayNext: canPlayNext,
       onNext: () {},

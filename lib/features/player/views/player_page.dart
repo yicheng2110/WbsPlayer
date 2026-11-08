@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
@@ -60,7 +61,10 @@ class PlayerPage extends StatefulWidget {
 }
 
 class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
-  late final MediaKitPlaybackEngine _engine = MediaKitPlaybackEngine();
+  late final MediaKitPlaybackEngine _engine = MediaKitPlaybackEngine(
+    cacheEnabled: widget.args.preferences.cacheEnabled,
+    cacheSizeMb: widget.args.preferences.cacheSizeMb,
+  );
   late final VideoController _videoController = VideoController(
     _engine.player,
     configuration: VideoControllerConfiguration(
@@ -88,6 +92,42 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
   bool _showStats = false;
   bool _isAdvancing = false;
   String? _completionHandledItemId;
+  bool _orientationChanged = false;
+  bool? _requestedLandscape;
+  Future<void> _orientationOperation = Future<void>.value();
+
+  bool get _supportsOrientationControl =>
+      !kIsWeb &&
+      (defaultTargetPlatform == TargetPlatform.android ||
+          defaultTargetPlatform == TargetPlatform.iOS);
+
+  Future<void> _rotateScreen() {
+    final currentLandscape =
+        _requestedLandscape ??
+        MediaQuery.orientationOf(context) == Orientation.landscape;
+    final targetLandscape = !currentLandscape;
+    _requestedLandscape = targetLandscape;
+    _orientationChanged = true;
+    _orientationOperation = _orientationOperation
+        .catchError((Object _) {})
+        .then((_) async {
+          try {
+            await SystemChrome.setPreferredOrientations(
+              targetLandscape
+                  ? [
+                      DeviceOrientation.landscapeLeft,
+                      DeviceOrientation.landscapeRight,
+                    ]
+                  : [DeviceOrientation.portraitUp],
+            );
+          } catch (_) {
+            if (_requestedLandscape == targetLandscape) {
+              _requestedLandscape = null;
+            }
+          }
+        });
+    return _orientationOperation;
+  }
 
   String _text(String key, String fallback) =>
       widget.args.text?.call(key) ?? fallback;
@@ -121,6 +161,15 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
     unawaited(
       ScreenBrightness().resetApplicationScreenBrightness().catchError((_) {}),
     );
+    if (_orientationChanged) {
+      unawaited(
+        _orientationOperation.catchError((Object _) {}).then((_) async {
+          try {
+            await SystemChrome.setPreferredOrientations([]);
+          } catch (_) {}
+        }),
+      );
+    }
     unawaited(SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge));
     _viewModel.dispose();
     super.dispose();
@@ -319,6 +368,12 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
                           };
                         });
                       },
+                      onRotate: _supportsOrientationControl
+                          ? _rotateScreen
+                          : null,
+                      isLandscape:
+                          MediaQuery.orientationOf(context) ==
+                          Orientation.landscape,
                       onRetry: () => _viewModel.open(),
                       onMute: () => unawaited(_viewModel.toggleMute()),
                       onStats: () => setState(() => _showStats = !_showStats),

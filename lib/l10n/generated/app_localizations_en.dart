@@ -366,6 +366,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get playerVideoFit => 'Change video fit';
 
   @override
+  String get playerLandscape => 'Switch to landscape';
+
+  @override
+  String get playerPortrait => 'Switch to portrait';
+
+  @override
   String get playerMore => 'More options';
 
   @override
@@ -402,6 +408,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get playerQuality => 'Streaming quality';
 
   @override
+  String get playerSettings => 'Player settings';
+
+  @override
   String get playerQualityOriginal => 'Original quality';
 
   @override
@@ -418,6 +427,20 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get playerHardwareAcceleration => 'Hardware decoding';
+
+  @override
+  String get playerCache => 'Playback cache';
+
+  @override
+  String get playerCacheDescription => 'Use disk cache while playing';
+
+  @override
+  String get playerCacheSize => 'Cache size';
+
+  @override
+  String playerCacheSizeValue(int size) {
+    return '$size MB';
+  }
 
   @override
   String get playerNextEpisode => 'Next episode';

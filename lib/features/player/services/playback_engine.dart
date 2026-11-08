@@ -1,5 +1,7 @@
 import 'package:media_kit/media_kit.dart';
 
+import '../models/player_preferences.dart';
+
 /// Minimal playback-engine contract so ViewModels can be tested without
 /// initializing the native libmpv backend.
 abstract interface class PlaybackEngine {
@@ -39,10 +41,24 @@ abstract interface class PlaybackEngine {
 class MediaKitPlaybackEngine implements PlaybackEngine {
   MediaKitPlaybackEngine({
     Player? player,
-    PlayerConfiguration configuration = const PlayerConfiguration(
-      bufferSize: 64 * 1024 * 1024,
-    ),
-  }) : player = player ?? Player(configuration: configuration);
+    PlayerConfiguration? configuration,
+    this.cacheEnabled = true,
+    this.cacheSizeMb = PlayerPreferences.defaultCacheSizeMb,
+  }) : player =
+           player ??
+           Player(
+             configuration:
+                 configuration ??
+                 PlayerConfiguration(
+                   bufferSize:
+                       PlayerPreferences.normalizeCacheSizeMb(cacheSizeMb) *
+                       1024 *
+                       1024,
+                 ),
+           );
+
+  final bool cacheEnabled;
+  final int cacheSizeMb;
 
   final Player player;
 
@@ -86,7 +102,22 @@ class MediaKitPlaybackEngine implements PlaybackEngine {
   double? get audioBitrate => player.state.audioBitrate;
 
   @override
-  Future<void> open(Media media) => player.open(media);
+  Future<void> open(Media media) async {
+    await _configureCache();
+    await player.open(media);
+  }
+
+  Future<void> _configureCache() async {
+    final platform = player.platform;
+    if (platform is! NativePlayer) return;
+    try {
+      await platform.setProperty('cache', cacheEnabled ? 'yes' : 'no');
+      await platform.setProperty('cache-on-disk', cacheEnabled ? 'yes' : 'no');
+    } on UnsupportedError {
+      // The web implementation does not expose mpv properties.
+    }
+  }
+
   @override
   Future<void> play() => player.play();
   @override

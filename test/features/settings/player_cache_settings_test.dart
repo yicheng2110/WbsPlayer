@@ -1,0 +1,85 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:wbs_player/app/locale_preference.dart';
+import 'package:wbs_player/features/player/models/player_preferences.dart';
+import 'package:wbs_player/features/settings/views/settings_page.dart';
+import 'package:wbs_player/l10n/generated/app_localizations.dart';
+
+void main() {
+  testWidgets('configures the playback cache switch and size slider', (
+    tester,
+  ) async {
+    final preferences = ValueNotifier(const PlayerPreferences());
+    addTearDown(preferences.dispose);
+    await tester.pumpWidget(_SettingsHarness(preferences: preferences));
+
+    expect(find.text('Player settings'), findsOneWidget);
+    await tester.ensureVisible(
+      find.byKey(const Key('player-cache-size-slider')),
+    );
+    await tester.pump();
+    expect(find.text('64 MB'), findsOneWidget);
+    final initialSlider = tester.widget<Slider>(
+      find.byKey(const Key('player-cache-size-slider')),
+    );
+    expect(initialSlider.onChanged, isNotNull);
+    expect(initialSlider.min, 2);
+    expect(initialSlider.max, 1024);
+    expect(initialSlider.divisions, 511);
+
+    await tester.ensureVisible(
+      find.byKey(const Key('player-cache-enabled-setting')),
+    );
+    await tester.tap(find.byKey(const Key('player-cache-enabled-setting')));
+    await tester.pump();
+
+    expect(preferences.value.cacheEnabled, isFalse);
+    expect(
+      tester
+          .widget<Slider>(find.byKey(const Key('player-cache-size-slider')))
+          .onChanged,
+      isNull,
+    );
+
+    await tester.tap(find.byKey(const Key('player-cache-enabled-setting')));
+    await tester.pump();
+    expect(preferences.value.cacheEnabled, isTrue);
+
+    final slider = tester.widget<Slider>(
+      find.byKey(const Key('player-cache-size-slider')),
+    );
+    slider.onChanged!(128);
+    await tester.pump();
+    expect(preferences.value.cacheSizeMb, 128);
+  });
+}
+
+class _SettingsHarness extends StatelessWidget {
+  const _SettingsHarness({required this.preferences});
+
+  final ValueNotifier<PlayerPreferences> preferences;
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      locale: const Locale('en'),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      home: Scaffold(
+        body: ValueListenableBuilder<PlayerPreferences>(
+          valueListenable: preferences,
+          builder: (context, value, _) => SettingsPage(
+            localePreference: LocalePreference.system,
+            isLocaleLoaded: true,
+            onLocalePreferenceSelected: (_) async {},
+            playerPreferences: value,
+            arePlayerPreferencesLoaded: true,
+            onPlayerPreferencesChanged: (value) async {
+              preferences.value = value;
+            },
+          ),
+        ),
+      ),
+    );
+  }
+}

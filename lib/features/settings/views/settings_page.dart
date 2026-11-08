@@ -39,6 +39,13 @@ class SettingsPage extends StatelessWidget {
           trailing: const Icon(Icons.chevron_right),
           onTap: isLocaleLoaded ? () => _showLanguageDialog(context) : null,
         ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 20, 16, 4),
+          child: Text(
+            l10n.playerSettings,
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+        ),
         ListTile(
           key: const Key('player-quality-setting'),
           leading: const Icon(Icons.high_quality_outlined),
@@ -119,6 +126,51 @@ class SettingsPage extends StatelessWidget {
                   playerPreferences.copyWith(hardwareAcceleration: value),
                 )
               : null,
+        ),
+        SwitchListTile(
+          key: const Key('player-cache-enabled-setting'),
+          title: Text(l10n.playerCache),
+          subtitle: Text(l10n.playerCacheDescription),
+          value: playerPreferences.cacheEnabled,
+          onChanged: arePlayerPreferencesLoaded
+              ? (value) => onPlayerPreferencesChanged(
+                  playerPreferences.copyWith(cacheEnabled: value),
+                )
+              : null,
+        ),
+        Column(
+          key: const Key('player-cache-size-setting'),
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            ListTile(
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+              title: Text(l10n.playerCacheSize),
+              subtitle: Text(
+                l10n.playerCacheSizeValue(playerPreferences.cacheSizeMb),
+              ),
+              leading: const Icon(Icons.storage_outlined),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Slider(
+                key: const Key('player-cache-size-slider'),
+                min: PlayerPreferences.minCacheSizeMb.toDouble(),
+                max: PlayerPreferences.maxCacheSizeMb.toDouble(),
+                divisions:
+                    (PlayerPreferences.maxCacheSizeMb -
+                        PlayerPreferences.minCacheSizeMb) ~/
+                    2,
+                value: playerPreferences.cacheSizeMb.toDouble(),
+                label: l10n.playerCacheSizeValue(playerPreferences.cacheSizeMb),
+                onChanged:
+                    arePlayerPreferencesLoaded && playerPreferences.cacheEnabled
+                    ? (value) => onPlayerPreferencesChanged(
+                        playerPreferences.copyWith(cacheSizeMb: value.round()),
+                      )
+                    : null,
+              ),
+            ),
+          ],
         ),
         const ReleaseUpdateTile(),
       ],
