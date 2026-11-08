@@ -5,10 +5,7 @@ import '../models/emby_media_detail.dart';
 import '../models/emby_server.dart';
 import '../services/emby_library_service.dart';
 
-/// Resolves a detail localization key from the host application's l10n object.
-///
-/// The module deliberately adds no ARB or generated localization files. Until
-/// the host provides a key, its stable key is shown as a visible placeholder.
+/// Uses host-provided translations and keeps stable keys as visible fallbacks.
 typedef EmbyMediaDetailText = String Function(String key);
 
 typedef EmbyMediaPlaybackDelegate = Future<void> Function({
@@ -35,6 +32,7 @@ class EmbyMediaDetailHero extends StatelessWidget {
     required this.onSourceChanged,
     required this.onAudioChanged,
     required this.onPlay,
+    this.isPlaybackBusy = false,
     this.playbackDelegate,
     this.text,
   });
@@ -49,6 +47,7 @@ class EmbyMediaDetailHero extends StatelessWidget {
   final ValueChanged<int> onSourceChanged;
   final ValueChanged<int> onAudioChanged;
   final VoidCallback onPlay;
+  final bool isPlaybackBusy;
   final EmbyMediaPlaybackDelegate? playbackDelegate;
   final EmbyMediaDetailText? text;
 
@@ -279,20 +278,33 @@ class EmbyMediaDetailHero extends StatelessWidget {
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
             FilledButton.icon(
-              onPressed: playbackDelegate == null || source == null
+              onPressed:
+                  isPlaybackBusy ||
+                      playbackDelegate == null ||
+                      (source == null && detail.type.toLowerCase() != 'series')
                   ? null
                   : onPlay,
-              icon: Icon(
-                playbackDelegate == null || source == null
-                    ? Icons.info_outline
-                    : Icons.play_arrow_rounded,
-              ),
+              icon: isPlaybackBusy
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : Icon(
+                      playbackDelegate == null ||
+                              (source == null &&
+                                  detail.type.toLowerCase() != 'series')
+                          ? Icons.info_outline
+                          : Icons.play_arrow_rounded,
+                    ),
               label: Text(
                 embyMediaDetailText(
                   text,
-                  playbackDelegate == null
+                  isPlaybackBusy
+                      ? 'mediaDetailLoading'
+                      : playbackDelegate == null
                       ? 'mediaDetailPlaybackUnavailable'
-                      : source == null
+                      : source == null && detail.type.toLowerCase() != 'series'
                       ? 'mediaDetailNoStreams'
                       : 'mediaDetailPlay',
                 ),
@@ -319,6 +331,7 @@ class EmbyMediaDetailHero extends StatelessWidget {
     required ValueChanged<T> onSelected,
   }) => PopupMenuButton<T>(
     tooltip: label,
+    enabled: !isPlaybackBusy,
     onSelected: onSelected,
     itemBuilder: (context) => options
         .map(
@@ -440,6 +453,7 @@ class EmbyMediaDetailSections extends StatelessWidget {
     required this.server,
     required this.libraryService,
     this.text,
+    this.onSeasonTap,
     this.onSimilarTap,
     this.onExternalLinkTap,
   });
@@ -452,6 +466,7 @@ class EmbyMediaDetailSections extends StatelessWidget {
   final EmbyServer server;
   final EmbyLibraryService libraryService;
   final EmbyMediaDetailText? text;
+  final ValueChanged<EmbyMediaSeason>? onSeasonTap;
   final ValueChanged<EmbySimilarItem>? onSimilarTap;
   final ValueChanged<EmbyExternalLink>? onExternalLinkTap;
 
@@ -489,6 +504,7 @@ class EmbyMediaDetailSections extends StatelessWidget {
                     server: server,
                     libraryService: libraryService,
                     text: text,
+                    onTap: onSeasonTap,
                   ),
               ],
               _sectionTitle(context, 'mediaDetailPhotos'),
@@ -586,12 +602,14 @@ class _SeasonRail extends StatelessWidget {
     required this.server,
     required this.libraryService,
     this.text,
+    this.onTap,
   });
 
   final List<EmbyMediaSeason> seasons;
   final EmbyServer server;
   final EmbyLibraryService libraryService;
   final EmbyMediaDetailText? text;
+  final ValueChanged<EmbyMediaSeason>? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -623,48 +641,53 @@ class _SeasonRail extends StatelessWidget {
           final count = season.episodeCount;
           return SizedBox(
             width: cardWidth,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(11),
-                    child: SizedBox.expand(
-                      child: season.primaryImageTag == null
-                          ? const _ImageFallback()
-                          : Image.network(
-                              imageUri.toString(),
-                              headers: {'X-Emby-Token': server.accessToken},
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, _, _) => const _ImageFallback(),
-                            ),
+            child: InkWell(
+              onTap: onTap == null ? null : () => onTap!(season),
+              borderRadius: BorderRadius.circular(11),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(11),
+                      child: SizedBox.expand(
+                        child: season.primaryImageTag == null
+                            ? const _ImageFallback()
+                            : Image.network(
+                                imageUri.toString(),
+                                headers: {'X-Emby-Token': server.accessToken},
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, _, _) =>
+                                    const _ImageFallback(),
+                              ),
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  seasonTitle,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: AppColors.mediaInk,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                if (count != null)
+                  const SizedBox(height: 8),
                   Text(
-                    embyMediaDetailText(
-                      text,
-                      'mediaDetailEpisodeCount',
-                    ).replaceAll('{count}', '$count'),
+                    seasonTitle,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                      color: AppColors.mediaMuted,
-                      fontSize: 12,
+                      color: AppColors.mediaInk,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
-              ],
+                  if (count != null)
+                    Text(
+                      embyMediaDetailText(
+                        text,
+                        'mediaDetailEpisodeCount',
+                      ).replaceAll('{count}', '$count'),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: AppColors.mediaMuted,
+                        fontSize: 12,
+                      ),
+                    ),
+                ],
+              ),
             ),
           );
         },

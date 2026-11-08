@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+import '../models/hardware_decoder_mode.dart';
 import '../models/player_session_state.dart';
 import 'player_osd_button.dart';
 
@@ -20,6 +21,8 @@ class PlayerOsdControls extends StatefulWidget {
     this.onAudio,
     this.onSubtitles,
     this.onRateChanged,
+    this.onDecoderModeChanged,
+    this.decoderMode = HardwareDecoderMode.hardwareSafe,
     this.onLockChanged,
     this.onFit,
     this.onRotate,
@@ -30,7 +33,6 @@ class PlayerOsdControls extends StatefulWidget {
     this.onNext,
     this.isMuted = false,
     this.canPlayNext = false,
-    this.hardwareAcceleration = true,
     this.text,
   });
 
@@ -44,6 +46,8 @@ class PlayerOsdControls extends StatefulWidget {
   final FutureOr<void> Function()? onAudio;
   final FutureOr<void> Function()? onSubtitles;
   final ValueChanged<double>? onRateChanged;
+  final ValueChanged<HardwareDecoderMode>? onDecoderModeChanged;
+  final HardwareDecoderMode decoderMode;
   final ValueChanged<bool>? onLockChanged;
   final VoidCallback? onFit;
   final FutureOr<void> Function()? onRotate;
@@ -54,7 +58,6 @@ class PlayerOsdControls extends StatefulWidget {
   final VoidCallback? onNext;
   final bool isMuted;
   final bool canPlayNext;
-  final bool hardwareAcceleration;
   final String Function(String key)? text;
 
   @override
@@ -195,8 +198,7 @@ class PlayerOsdControlsState extends State<PlayerOsdControls> {
                           left: inset - 8,
                           right: inset - 8,
                           child: _buildTopBar(
-                            constraints.maxWidth >=
-                                    (widget.onRotate == null ? 320 : 380) &&
+                            constraints.maxWidth >= 320 &&
                                 MediaQuery.textScalerOf(context).scale(18) <=
                                     24,
                           ),
@@ -270,13 +272,22 @@ class PlayerOsdControlsState extends State<PlayerOsdControls> {
       const Spacer(),
       if (showDecoder)
         Tooltip(
-          message: _l10n.playerHardwareAcceleration,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14),
+          message: _l10n.playerDecoderMode,
+          child: TextButton(
+            key: const Key('player-decoder'),
+            onPressed: widget.onDecoderModeChanged == null
+                ? null
+                : () => _run(
+                    () => widget.onDecoderModeChanged!(widget.decoderMode.next),
+                  ),
+            style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFFE5E3E9),
+              minimumSize: const Size(52, 48),
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+            ),
             child: Text(
-              widget.hardwareAcceleration ? 'HW+' : 'SW',
-              key: const Key('player-decoder'),
-              style: const TextStyle(color: Color(0xFFE5E3E9), fontSize: 18),
+              widget.decoderMode.label,
+              style: const TextStyle(fontSize: 18),
             ),
           ),
         ),

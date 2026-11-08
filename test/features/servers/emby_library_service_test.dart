@@ -7,6 +7,80 @@ import 'package:wbs_player/features/servers/services/emby_api_response_cache.dar
 import 'package:wbs_player/features/servers/services/emby_library_service.dart';
 
 void main() {
+  test('loads TV libraries as series instead of individual episodes', () async {
+    final requests = <http.Request>[];
+    final service = EmbyLibraryService(
+      client: MockClient((request) async {
+        requests.add(request);
+        if (request.url.path.endsWith('/Users/user-1/Views')) {
+          return http.Response(
+            jsonEncode({
+              'Items': [
+                {
+                  'Id': 'tv-library',
+                  'Name': 'TV Shows',
+                  'CollectionType': 'tvshows',
+                },
+              ],
+            }),
+            200,
+          );
+        }
+        if (request.url.path.endsWith('/Users/user-1/Items/Latest')) {
+          return http.Response('[]', 200);
+        }
+        if (request.url.path.endsWith('/Users/user-1/Items/Resume')) {
+          return http.Response(
+            jsonEncode({'Items': <Object>[], 'TotalRecordCount': 0}),
+            200,
+          );
+        }
+        if (request.url.path.endsWith('/Users/user-1/Items')) {
+          return http.Response(
+            jsonEncode({
+              'Items': [
+                {'Id': 'series-1', 'Name': 'Example series', 'Type': 'Series'},
+              ],
+              'TotalRecordCount': 1,
+            }),
+            200,
+          );
+        }
+        return http.Response('', 404);
+      }),
+    );
+    addTearDown(service.close);
+
+    final home = await service.loadHome(
+      serverAddress: 'http://emby.example:8096',
+      accessToken: 'token',
+      userId: 'user-1',
+    );
+    final library = home.libraries.single.library;
+    expect(library.collectionType, 'tvshows');
+
+    final page = await service.loadLibraryItems(
+      serverAddress: 'http://emby.example:8096',
+      accessToken: 'token',
+      userId: 'user-1',
+      parentId: library.id,
+      collectionType: library.collectionType,
+      sortBy: EmbyLibrarySort.title,
+      ascending: true,
+      startIndex: 0,
+    );
+
+    expect(page.items.single.type, 'Series');
+    final itemsRequest = requests.singleWhere(
+      (request) =>
+          request.url.path.endsWith('/Users/user-1/Items') &&
+          !request.url.path.endsWith('/Latest') &&
+          !request.url.path.endsWith('/Resume'),
+    );
+    expect(itemsRequest.url.queryParameters['Recursive'], 'true');
+    expect(itemsRequest.url.queryParameters['IncludeItemTypes'], 'Series');
+  });
+
   test('caches library item pages and refresh bypasses the cache', () async {
     var requests = 0;
     final service = EmbyLibraryService(

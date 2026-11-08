@@ -33,6 +33,9 @@ class EmbyMediaDetailService {
       'PremiereDate,RunTimeTicks,UserData,SeriesName,SeriesId,SeasonId,SeasonName,'
       'ParentIndexNumber,IndexNumber,BackdropImageTags,ParentBackdropItemId,'
       'ParentBackdropImageTags';
+  static const _episodeFields =
+      'Overview,ProductionYear,RunTimeTicks,UserData,SeriesId,'
+      'SeasonId,SeasonName,ParentIndexNumber,IndexNumber';
 
   final http.Client _client;
   final EmbyApiResponseCache _responseCache;
@@ -147,6 +150,167 @@ class EmbyMediaDetailService {
         .map(EmbyMediaSeason.fromJson)
         .where((season) => season.id.isNotEmpty)
         .toList(growable: false);
+  }
+
+  /// Loads episodes belonging to a season, ordered by episode number.
+  Future<List<EmbyMediaDetail>> getSeasonEpisodes({
+    required String serverAddress,
+    required String accessToken,
+    required String userId,
+    required String seriesId,
+    required String seasonId,
+    bool forceRefresh = false,
+  }) async {
+    return _getEpisodes(
+      serverAddress: serverAddress,
+      accessToken: accessToken,
+      userId: userId,
+      seriesId: seriesId,
+      seasonId: seasonId,
+      forceRefresh: forceRefresh,
+    );
+  }
+
+  Future<List<EmbyMediaDetail>> _getEpisodes({
+    required String serverAddress,
+    required String accessToken,
+    required String userId,
+    required String seriesId,
+    String? seasonId,
+    bool forceRefresh = false,
+  }) async {
+    const pageSize = 200;
+    final episodes = <String, EmbyMediaDetail>{};
+    var startIndex = 0;
+    while (true) {
+      final payload = await _getJson(
+        _endpoint(
+          serverAddress,
+          'Shows/${_segment(seriesId)}/Episodes',
+        ).replace(
+          queryParameters: {
+            'UserId': userId,
+            if (seasonId != null) 'SeasonId': seasonId,
+            'Fields': _episodeFields,
+            'EnableImages': 'true',
+            'EnableUserData': 'true',
+            'EnableImageTypes': 'Primary,Thumb',
+            'SortBy': 'ParentIndexNumber,IndexNumber',
+            'SortOrder': 'Ascending',
+            'EnableTotalRecordCount': 'true',
+            'StartIndex': '$startIndex',
+            'Limit': '$pageSize',
+          },
+        ),
+        accessToken,
+        cacheScope: _cacheScope(serverAddress, userId),
+        forceRefresh: forceRefresh,
+      );
+      final items = _readItems(payload);
+      final previousCount = episodes.length;
+      for (final item in items) {
+        final episode = EmbyMediaDetail.fromJson(item);
+        if (episode.id.isNotEmpty && episode.type.toLowerCase() == 'episode') {
+          episodes[episode.id] = episode;
+        }
+      }
+      startIndex += items.length;
+      final rawTotal = _asMap(payload)?['TotalRecordCount'];
+      final total = rawTotal is num
+          ? rawTotal.toInt()
+          : int.tryParse('$rawTotal');
+      if (items.isEmpty ||
+          episodes.length == previousCount ||
+          (total != null && startIndex >= total) ||
+          (total == null && items.length < pageSize)) {
+        break;
+      }
+    }
+    return episodes.values.toList()..sort(_compareEpisodes);
+  }
+
+  /// Resolves a series to its most recently played episode.
+  ///
+  /// Prefers the latest playback timestamp over episode order. Without history,
+  /// selects season one, episode one, or the earliest available regular episode.
+  Future<EmbyMediaDetail?> getSeriesPlaybackEpisode({
+    required String serverAddress,
+    required String accessToken,
+    required String userId,
+    required String seriesId,
+  }) async {
+    final episodes = await _getEpisodes(
+      serverAddress: serverAddress,
+      accessToken: accessToken,
+      userId: userId,
+      seriesId: seriesId,
+      forceRefresh: true,
+    );
+    final history = episodes
+        .where(
+          (episode) =>
+              episode.datePlayed != null ||
+              episode.isPlayed ||
+              episode.playCount > 0 ||
+              episode.playbackPositionTicks > 0,
+        )
+        .toList();
+    final playedByDate =
+        history.where((episode) => episode.datePlayed != null).toList()..sort(
+          (left, right) => right.datePlayed!.compareTo(left.datePlayed!),
+        );
+    if (playedByDate.isNotEmpty) return playedByDate.first;
+    // Some compatible servers omit playback timestamps. Only then use order.
+    final resumable = history
+        .where((episode) => episode.playbackPositionTicks > 0)
+        .toList();
+    if (resumable.isNotEmpty) return resumable.last;
+    final played = history
+        .where((episode) => episode.isPlayed || episode.playCount > 0)
+        .toList();
+    if (played.isNotEmpty) return played.last;
+
+    for (final episode in episodes) {
+      if (episode.seasonNumber == 1 && episode.episodeNumber == 1) {
+        return episode;
+      }
+    }
+    for (final episode in episodes) {
+      if ((episode.seasonNumber ?? 0) > 0 && (episode.episodeNumber ?? 0) > 0) {
+        return episode;
+      }
+    }
+
+    final seasons = await getSeasons(
+      serverAddress: serverAddress,
+      accessToken: accessToken,
+      userId: userId,
+      seriesId: seriesId,
+      forceRefresh: true,
+    );
+    final regularSeasons =
+        seasons
+            .where(
+              (season) => season.indexNumber != null && season.indexNumber! > 0,
+            )
+            .toList()
+          ..sort(
+            (left, right) => left.indexNumber!.compareTo(right.indexNumber!),
+          );
+    if (regularSeasons.isEmpty) return null;
+    final firstEpisodes = await getSeasonEpisodes(
+      serverAddress: serverAddress,
+      accessToken: accessToken,
+      userId: userId,
+      seriesId: seriesId,
+      seasonId: regularSeasons.first.id,
+      forceRefresh: true,
+    );
+    if (firstEpisodes.isEmpty) return null;
+    for (final episode in firstEpisodes) {
+      if (episode.episodeNumber == 1) return episode;
+    }
+    return firstEpisodes.first;
   }
 
   /// Finds the episode immediately after [episodeId] in series order.

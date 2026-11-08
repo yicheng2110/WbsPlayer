@@ -60,14 +60,20 @@ class EmbyLibraryItem {
 }
 
 class EmbyLibrary {
-  const EmbyLibrary({required this.id, required this.name});
+  const EmbyLibrary({
+    required this.id,
+    required this.name,
+    this.collectionType,
+  });
 
   final String id;
   final String name;
+  final String? collectionType;
 
   factory EmbyLibrary.fromJson(Map<String, dynamic> json) => EmbyLibrary(
     id: json['Id'] as String? ?? '',
     name: json['Name'] as String? ?? '',
+    collectionType: json['CollectionType'] as String?,
   );
 }
 

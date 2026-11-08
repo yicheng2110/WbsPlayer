@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:media_kit/media_kit.dart';
+import 'package:wbs_player/features/player/models/hardware_decoder_mode.dart';
 import 'package:wbs_player/features/player/services/emby_playback_reporter.dart';
 import 'package:wbs_player/features/player/services/emby_playback_service.dart';
 import 'package:wbs_player/features/player/services/playback_engine.dart';
@@ -64,6 +65,8 @@ void main() {
     expect(engine.openedMedia, isNotNull);
     expect(engine.openedMedia!.uri, 'http://emby.test:8096/video.mkv');
     expect(engine.openedMedia!.start, const Duration(seconds: 120));
+    await viewModel.setHardwareDecoderMode(HardwareDecoderMode.hardwareAuto);
+    expect(engine.decoderMode, HardwareDecoderMode.hardwareAuto);
     expect(
       requests.map((request) => request.url.path),
       contains('/emby/Sessions/Playing'),
@@ -167,6 +170,7 @@ class _FakePlaybackEngine implements PlaybackEngine {
   Media? openedMedia;
   Duration? lastSeek;
   double currentVolume = 100;
+  HardwareDecoderMode? decoderMode;
   bool disposed = false;
 
   @override
@@ -228,6 +232,11 @@ class _FakePlaybackEngine implements PlaybackEngine {
   @override
   Future<void> setRate(double rate) async => _rate.add(rate);
   void emitRate(double rate) => _rate.add(rate);
+  @override
+  Future<void> setHardwareDecoderMode(HardwareDecoderMode mode) async {
+    decoderMode = mode;
+  }
+
   @override
   Future<void> setAudioPassthrough(bool enabled) async {}
   @override

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:media_kit/media_kit.dart';
+import 'package:wbs_player/features/player/models/hardware_decoder_mode.dart';
 import 'package:wbs_player/features/player/models/player_session_state.dart';
 import 'package:wbs_player/features/player/widgets/player_gesture_layer.dart';
 import 'package:wbs_player/features/player/widgets/player_osd_controls.dart';
@@ -156,6 +157,34 @@ void main() {
     await tester.tap(find.byKey(const Key('player-lock')));
     await tester.pump();
     expect(find.byKey(const Key('player-rotate')), findsNothing);
+  });
+
+  testWidgets('cycles the decoder mode in the displayed order', (tester) async {
+    final changes = <HardwareDecoderMode>[];
+    var current = HardwareDecoderMode.software;
+    await tester.pumpWidget(
+      _player(
+        decoderMode: current,
+        onDecoderModeChanged: (mode) => changes.add(mode),
+      ),
+    );
+
+    for (final next in [
+      HardwareDecoderMode.hardwareSafe,
+      HardwareDecoderMode.hardwareAuto,
+      HardwareDecoderMode.software,
+    ]) {
+      expect(find.text(current.label), findsOneWidget);
+      await tester.tap(find.byKey(const Key('player-decoder')));
+      expect(changes.last, next);
+      current = next;
+      await tester.pumpWidget(
+        _player(
+          decoderMode: current,
+          onDecoderModeChanged: (mode) => changes.add(mode),
+        ),
+      );
+    }
   });
 
   testWidgets('locks controls and keeps unlock reachable after auto-hide', (
@@ -375,6 +404,8 @@ Widget _player({
   ValueChanged<Duration>? onSeek,
   VoidCallback? onFit,
   FutureOr<void> Function()? onRotate,
+  HardwareDecoderMode decoderMode = HardwareDecoderMode.hardwareSafe,
+  ValueChanged<HardwareDecoderMode>? onDecoderModeChanged,
   VoidCallback? onStats,
   bool canPlayNext = false,
   Locale locale = const Locale('en'),
@@ -407,6 +438,8 @@ Widget _player({
       onLockChanged: onLockChanged,
       onFit: onFit,
       onRotate: onRotate,
+      decoderMode: decoderMode,
+      onDecoderModeChanged: onDecoderModeChanged,
       onStats: onStats,
       canPlayNext: canPlayNext,
       onNext: () {},

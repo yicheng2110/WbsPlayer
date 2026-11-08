@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wbs_player/app/locale_preference.dart';
 import 'package:wbs_player/features/player/models/player_preferences.dart';
+import 'package:wbs_player/features/settings/views/player_settings_page.dart';
 import 'package:wbs_player/features/settings/views/settings_page.dart';
 import 'package:wbs_player/l10n/generated/app_localizations.dart';
 
@@ -14,6 +15,9 @@ void main() {
     await tester.pumpWidget(_SettingsHarness(preferences: preferences));
 
     expect(find.text('Player settings'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('player-settings-entry')));
+    await tester.pumpAndSettle();
+
     await tester.ensureVisible(
       find.byKey(const Key('player-cache-size-slider')),
     );
@@ -68,14 +72,28 @@ class _SettingsHarness extends StatelessWidget {
       home: Scaffold(
         body: ValueListenableBuilder<PlayerPreferences>(
           valueListenable: preferences,
-          builder: (context, value, _) => SettingsPage(
+          builder: (context, _, _) => SettingsPage(
             localePreference: LocalePreference.system,
             isLocaleLoaded: true,
             onLocalePreferenceSelected: (_) async {},
-            playerPreferences: value,
-            arePlayerPreferencesLoaded: true,
-            onPlayerPreferencesChanged: (value) async {
-              preferences.value = value;
+            onPlayerSettingsTap: () {
+              Navigator.of(context).push<void>(
+                MaterialPageRoute(
+                  builder: (_) => ValueListenableBuilder<PlayerPreferences>(
+                    valueListenable: preferences,
+                    builder: (context, playerPreferences, _) => Scaffold(
+                      appBar: AppBar(title: const Text('Player settings')),
+                      body: PlayerSettingsPage(
+                        playerPreferences: playerPreferences,
+                        arePlayerPreferencesLoaded: true,
+                        onPlayerPreferencesChanged: (updated) async {
+                          preferences.value = updated;
+                        },
+                      ),
+                    ),
+                  ),
+                ),
+              );
             },
           ),
         ),

@@ -8,6 +8,7 @@ import 'package:media_kit_video/media_kit_video.dart';
 import 'package:screen_brightness/screen_brightness.dart';
 
 import '../../servers/models/emby_media_detail.dart';
+import '../models/hardware_decoder_mode.dart';
 import '../models/player_preferences.dart';
 import '../models/player_session_state.dart';
 import '../services/emby_playback_reporter.dart';
@@ -67,9 +68,7 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
   );
   late final VideoController _videoController = VideoController(
     _engine.player,
-    configuration: VideoControllerConfiguration(
-      hwdec: widget.args.preferences.hardwareAcceleration ? 'auto-safe' : 'no',
-    ),
+    configuration: VideoControllerConfiguration(hwdec: _decoderMode.mpvValue),
   );
   late final PlayerViewModel _viewModel = PlayerViewModel(
     serverAddress: widget.args.serverAddress,
@@ -92,6 +91,10 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
   bool _showStats = false;
   bool _isAdvancing = false;
   String? _completionHandledItemId;
+  HardwareDecoderMode _decoderMode = HardwareDecoderMode.hardwareSafe;
+  HardwareDecoderMode _appliedDecoderMode = HardwareDecoderMode.hardwareSafe;
+  int _decoderRequest = 0;
+  Future<void> _decoderOperation = Future<void>.value();
   bool _orientationChanged = false;
   bool? _requestedLandscape;
   Future<void> _orientationOperation = Future<void>.value();
@@ -129,12 +132,46 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
     return _orientationOperation;
   }
 
+  Future<void> _setDecoderMode(HardwareDecoderMode mode) {
+    final request = ++_decoderRequest;
+    setState(() => _decoderMode = mode);
+    _decoderOperation = _decoderOperation.then((_) async {
+      try {
+        await _viewModel.setHardwareDecoderMode(mode);
+        _appliedDecoderMode = mode;
+        if (mounted && request == _decoderRequest) {
+          setState(() => _decoderMode = mode);
+        }
+      } catch (_) {
+        if (!mounted || request != _decoderRequest) return;
+        setState(() => _decoderMode = _appliedDecoderMode);
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            SnackBar(
+              content: Text(
+                _text(
+                  'playerDecoderSwitchFailed',
+                  'Unable to change decoder mode',
+                ),
+              ),
+            ),
+          );
+      }
+    });
+    return _decoderOperation;
+  }
+
   String _text(String key, String fallback) =>
       widget.args.text?.call(key) ?? fallback;
 
   @override
   void initState() {
     super.initState();
+    _decoderMode = widget.args.preferences.hardwareAcceleration
+        ? HardwareDecoderMode.hardwareSafe
+        : HardwareDecoderMode.software;
+    _appliedDecoderMode = _decoderMode;
     WidgetsBinding.instance.addObserver(this);
     _viewModel.addListener(_handlePlaybackState);
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
@@ -355,10 +392,11 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
                           _showTracks(PlayerTrackSection.subtitles),
                       onRateChanged: (rate) =>
                           unawaited(_viewModel.setRate(rate)),
+                      decoderMode: _decoderMode,
+                      onDecoderModeChanged: (mode) =>
+                          unawaited(_setDecoderMode(mode)),
                       onLockChanged: (locked) =>
                           setState(() => _controlsLocked = locked),
-                      hardwareAcceleration:
-                          widget.args.preferences.hardwareAcceleration,
                       onFit: () {
                         setState(() {
                           _videoFit = switch (_videoFit) {

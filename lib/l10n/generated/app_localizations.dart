@@ -578,6 +578,12 @@ abstract class AppLocalizations {
   /// **'{count} 集'**
   String mediaDetailEpisodeCount(int count);
 
+  /// No description provided for @mediaDetailNoEpisodes.
+  ///
+  /// In zh, this message translates to:
+  /// **'暂无剧集'**
+  String get mediaDetailNoEpisodes;
+
   /// No description provided for @mediaDetailStudios.
   ///
   /// In zh, this message translates to:
@@ -787,6 +793,18 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'切换竖屏'**
   String get playerPortrait;
+
+  /// No description provided for @playerDecoderMode.
+  ///
+  /// In zh, this message translates to:
+  /// **'点击切换解码模式'**
+  String get playerDecoderMode;
+
+  /// No description provided for @playerDecoderSwitchFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'切换解码模式失败'**
+  String get playerDecoderSwitchFailed;
 
   /// No description provided for @playerMore.
   ///

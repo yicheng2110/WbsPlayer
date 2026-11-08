@@ -117,7 +117,7 @@ class EmbyLibraryService {
     required String userId,
     bool forceRefresh = false,
   }) async {
-    final items = await _getItems(
+    final payload = await _getPayload(
       serverAddress: serverAddress,
       accessToken: accessToken,
       path: 'Users/$userId/Views',
@@ -125,13 +125,22 @@ class EmbyLibraryService {
         'IncludeExternalContent': 'false',
         'EnableImages': 'true',
       },
-      queryResult: true,
       forceRefresh: forceRefresh,
     );
-    return items
-        .map((item) => EmbyLibrary(id: item.id, name: item.name))
-        .where((library) => library.id.isNotEmpty && library.name.isNotEmpty)
-        .toList(growable: false);
+    if (payload is! Map<String, dynamic> || payload['Items'] is! List) {
+      throw const EmbyLibraryRequestException();
+    }
+    try {
+      return (payload['Items'] as List)
+          .whereType<Map>()
+          .map(
+            (item) => EmbyLibrary.fromJson(Map<String, dynamic>.from(item)),
+          )
+          .where((library) => library.id.isNotEmpty && library.name.isNotEmpty)
+          .toList(growable: false);
+    } on TypeError {
+      throw const EmbyLibraryRequestException();
+    }
   }
 
   Future<List<EmbyLibraryItem>> _loadLatestItems({
@@ -194,6 +203,7 @@ class EmbyLibraryService {
     required EmbyLibrarySort sortBy,
     required bool ascending,
     required int startIndex,
+    String? collectionType,
     int limit = 40,
     bool forceRefresh = false,
   }) async {
@@ -212,6 +222,8 @@ class EmbyLibraryService {
         'Limit': '$limit',
         'SortBy': apiSort,
         'SortOrder': ascending ? 'Ascending' : 'Descending',
+        if (collectionType?.toLowerCase() == 'tvshows')
+          'IncludeItemTypes': 'Series',
         'Fields': 'ProductionYear,Overview',
         'EnableImages': 'true',
         'EnableUserData': 'true',

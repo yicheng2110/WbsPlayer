@@ -174,6 +174,7 @@ class _EmbyLibraryPageState extends State<EmbyLibraryPage> {
         accessToken: _accessToken,
         userId: userId,
         parentId: widget.library.id,
+        collectionType: widget.library.collectionType,
         sortBy: _sortBy == EmbyLibrarySort.random
             ? EmbyLibrarySort.title
             : _sortBy,
@@ -190,6 +191,7 @@ class _EmbyLibraryPageState extends State<EmbyLibraryPage> {
         accessToken: _accessToken,
         userId: _userId!,
         parentId: widget.library.id,
+        collectionType: widget.library.collectionType,
         sortBy: _sortBy == EmbyLibrarySort.random
             ? EmbyLibrarySort.title
             : _sortBy,

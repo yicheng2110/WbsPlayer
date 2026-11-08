@@ -267,6 +267,9 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get mediaDetailNoEpisodes => 'No episodes available';
+
+  @override
   String get mediaDetailStudios => 'Studios';
 
   @override
@@ -370,6 +373,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get playerPortrait => 'Switch to portrait';
+
+  @override
+  String get playerDecoderMode => 'Tap to change decoder mode';
+
+  @override
+  String get playerDecoderSwitchFailed => 'Unable to change decoder mode';
 
   @override
   String get playerMore => 'More options';

@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:media_kit/media_kit.dart';
 
 import '../../servers/models/emby_media_detail.dart';
+import '../models/hardware_decoder_mode.dart';
 import '../models/player_media_source.dart';
 import '../models/player_preferences.dart';
 import '../models/player_session_state.dart';
@@ -231,6 +232,9 @@ class PlayerViewModel extends ChangeNotifier {
       _engine.setVolume(volume.clamp(0, 100));
 
   Future<void> setRate(double rate) => _engine.setRate(rate);
+
+  Future<void> setHardwareDecoderMode(HardwareDecoderMode mode) =>
+      _engine.setHardwareDecoderMode(mode);
 
   Future<void> selectAudio(AudioTrack track) async {
     await _engine.setAudioTrack(track);

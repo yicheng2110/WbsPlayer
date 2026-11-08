@@ -21,6 +21,9 @@ class EmbyMediaDetail {
     this.officialRating,
     this.premiereDate,
     this.runTimeTicks,
+    this.datePlayed,
+    this.playCount = 0,
+    this.isPlayed = false,
     this.playbackPositionTicks = 0,
     this.isFavorite = false,
     this.isFolder = false,
@@ -54,6 +57,9 @@ class EmbyMediaDetail {
   final String? officialRating;
   final DateTime? premiereDate;
   final int? runTimeTicks;
+  final DateTime? datePlayed;
+  final int playCount;
+  final bool isPlayed;
   final int playbackPositionTicks;
   final bool isFavorite;
   final bool isFolder;
@@ -85,6 +91,11 @@ class EmbyMediaDetail {
       officialRating: _text(json['OfficialRating']),
       premiereDate: DateTime.tryParse(_text(json['PremiereDate']) ?? ''),
       runTimeTicks: _positiveInt(json['RunTimeTicks']),
+      datePlayed: DateTime.tryParse(
+        _text(userData['LastPlayedDate'] ?? json['DatePlayed']) ?? '',
+      ),
+      playCount: _nonNegativeInt(userData['PlayCount']) ?? 0,
+      isPlayed: _bool(userData['Played']) ?? false,
       playbackPositionTicks:
           _positiveInt(userData['PlaybackPositionTicks']) ?? 0,
       isFavorite: _bool(userData['IsFavorite']) ?? false,
@@ -126,6 +137,9 @@ class EmbyMediaDetail {
     if (runTimeTicks != null) 'RunTimeTicks': runTimeTicks,
     'UserData': {
       'PlaybackPositionTicks': playbackPositionTicks,
+      if (datePlayed != null) 'LastPlayedDate': datePlayed!.toIso8601String(),
+      'PlayCount': playCount,
+      'Played': isPlayed,
       'IsFavorite': isFavorite,
     },
     'Genres': genres,

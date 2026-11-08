@@ -1,5 +1,6 @@
 import 'package:media_kit/media_kit.dart';
 
+import '../models/hardware_decoder_mode.dart';
 import '../models/player_preferences.dart';
 
 /// Minimal playback-engine contract so ViewModels can be tested without
@@ -31,6 +32,7 @@ abstract interface class PlaybackEngine {
   Future<void> seek(Duration position);
   Future<void> setVolume(double volume);
   Future<void> setRate(double rate);
+  Future<void> setHardwareDecoderMode(HardwareDecoderMode mode);
   Future<void> setAudioPassthrough(bool enabled);
   Future<void> setAudioTrack(AudioTrack track);
   Future<void> setSubtitleTrack(SubtitleTrack track);
@@ -128,6 +130,15 @@ class MediaKitPlaybackEngine implements PlaybackEngine {
   Future<void> setVolume(double volume) => player.setVolume(volume);
   @override
   Future<void> setRate(double rate) => player.setRate(rate);
+  @override
+  Future<void> setHardwareDecoderMode(HardwareDecoderMode mode) async {
+    final platform = player.platform;
+    if (platform is! NativePlayer) {
+      throw UnsupportedError('Hardware decoder switching is unavailable.');
+    }
+    await platform.setProperty('hwdec', mode.mpvValue);
+  }
+
   @override
   Future<void> setAudioPassthrough(bool enabled) async {
     final platform = player.platform;

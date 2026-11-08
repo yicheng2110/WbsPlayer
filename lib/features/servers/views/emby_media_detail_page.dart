@@ -24,6 +24,7 @@ class EmbyMediaDetailPage extends StatefulWidget {
     this.detailService,
     this.playbackDelegate,
     this.text,
+    this.onSeasonTap,
     this.onSimilarTap,
     this.onExternalLinkTap,
   });
@@ -35,6 +36,11 @@ class EmbyMediaDetailPage extends StatefulWidget {
   final EmbyMediaDetailService? detailService;
   final EmbyMediaPlaybackDelegate? playbackDelegate;
   final EmbyMediaDetailText? text;
+  final void Function({
+    required EmbyMediaDetail detail,
+    required EmbyMediaSeason season,
+  })?
+  onSeasonTap;
   final ValueChanged<EmbySimilarItem>? onSimilarTap;
   final ValueChanged<EmbyExternalLink>? onExternalLinkTap;
 
@@ -46,6 +52,7 @@ class _EmbyMediaDetailPageState extends State<EmbyMediaDetailPage> {
   late final EmbyMediaDetailService _detailService;
   late final bool _ownsDetailService;
   late final EmbyMediaDetailViewModel _viewModel;
+  bool _isOpeningPlayer = false;
 
   @override
   void initState() {
@@ -72,10 +79,25 @@ class _EmbyMediaDetailPageState extends State<EmbyMediaDetailPage> {
 
   Future<void> _play() async {
     final delegate = widget.playbackDelegate;
-    final detail = _viewModel.content?.detail;
-    final source = _viewModel.selectedMediaSource;
-    if (delegate == null || detail == null || source == null) return;
+    if (delegate == null ||
+        _isOpeningPlayer ||
+        _viewModel.isLoading ||
+        _viewModel.isResolvingPlayback)
+      return;
+    setState(() => _isOpeningPlayer = true);
     try {
+      final ready = await _viewModel.preparePlayback();
+      if (!mounted) return;
+      final detail = _viewModel.playbackDetail;
+      final source = _viewModel.selectedMediaSource;
+      if (!ready || detail == null || source == null) {
+        if (detail == null) {
+          _showMessage('mediaDetailNoEpisodes');
+        } else {
+          _showMessage('mediaDetailNoStreams');
+        }
+        return;
+      }
       await delegate(
         detail: detail,
         mediaSource: source,
@@ -84,6 +106,8 @@ class _EmbyMediaDetailPageState extends State<EmbyMediaDetailPage> {
     } catch (_) {
       if (!mounted) return;
       _showMessage('mediaDetailPlaybackFailed');
+    } finally {
+      if (mounted) setState(() => _isOpeningPlayer = false);
     }
   }
 
@@ -213,7 +237,7 @@ class _EmbyMediaDetailPageState extends State<EmbyMediaDetailPage> {
               SliverToBoxAdapter(
                 child: EmbyMediaDetailHero(
                   detail: content.detail,
-                  mediaSources: content.mediaSources,
+                  mediaSources: _viewModel.playbackSources,
                   images: content.images,
                   server: widget.server,
                   libraryService: widget.libraryService,
@@ -222,6 +246,10 @@ class _EmbyMediaDetailPageState extends State<EmbyMediaDetailPage> {
                   onSourceChanged: _viewModel.selectSource,
                   onAudioChanged: _viewModel.selectAudio,
                   onPlay: _play,
+                  isPlaybackBusy:
+                      _isOpeningPlayer ||
+                      _viewModel.isResolvingPlayback ||
+                      _viewModel.isLoading,
                   playbackDelegate: widget.playbackDelegate,
                   text: widget.text,
                 ),
@@ -236,6 +264,12 @@ class _EmbyMediaDetailPageState extends State<EmbyMediaDetailPage> {
                   server: widget.server,
                   libraryService: widget.libraryService,
                   text: widget.text,
+                  onSeasonTap: widget.onSeasonTap == null
+                      ? null
+                      : (season) => widget.onSeasonTap!(
+                          detail: content.detail,
+                          season: season,
+                        ),
                   onSimilarTap: widget.onSimilarTap,
                   onExternalLinkTap: widget.onExternalLinkTap,
                 ),

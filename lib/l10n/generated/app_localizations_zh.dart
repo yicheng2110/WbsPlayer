@@ -260,6 +260,9 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get mediaDetailNoEpisodes => '暂无剧集';
+
+  @override
   String get mediaDetailStudios => '工作室';
 
   @override
@@ -363,6 +366,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get playerPortrait => '切换竖屏';
+
+  @override
+  String get playerDecoderMode => '点击切换解码模式';
+
+  @override
+  String get playerDecoderSwitchFailed => '切换解码模式失败';
 
   @override
   String get playerMore => '更多选项';
