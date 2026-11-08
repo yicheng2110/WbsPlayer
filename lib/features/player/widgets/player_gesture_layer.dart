@@ -15,6 +15,7 @@ class PlayerGestureLayer extends StatefulWidget {
     required this.onVolumeChanged,
     required this.onTap,
     required this.onDoubleTap,
+    this.seekDuration = const Duration(minutes: 10),
     this.onDoubleTapSeek,
     this.locked = false,
     this.onPreviewChanged,
@@ -31,6 +32,7 @@ class PlayerGestureLayer extends StatefulWidget {
   final ValueChanged<double> onVolumeChanged;
   final VoidCallback onTap;
   final VoidCallback onDoubleTap;
+  final Duration seekDuration;
   final ValueChanged<bool>? onDoubleTapSeek;
   final ValueChanged<Duration?>? onPreviewChanged;
   final VoidCallback? onActivity;
@@ -147,9 +149,10 @@ class _PlayerGestureLayerState extends State<PlayerGestureLayer> {
       _startValue = brightness * 100;
     }
     if (_isHorizontalSeek) {
-      final seconds = delta.dx / size.width * 120;
+      final seekMilliseconds =
+          delta.dx / size.width * widget.seekDuration.inMilliseconds;
       final milliseconds =
-          _startPosition!.inMilliseconds + (seconds * 1000).round();
+          _startPosition!.inMilliseconds + seekMilliseconds.round();
       final maximum = widget.duration.inMilliseconds;
       final candidate = Duration(
         milliseconds: maximum > 0
@@ -220,6 +223,7 @@ class _PlayerGestureLayerState extends State<PlayerGestureLayer> {
   }
 
   void _cancelPan() {
+    if (_start == null) return;
     _gestureGeneration++;
     widget.onInteractionChanged?.call(false);
     widget.onActivity?.call();

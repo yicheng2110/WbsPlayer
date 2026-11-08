@@ -7,6 +7,14 @@ class PlayerPreferences {
   static const maxCacheSizeMb = 1024;
   static const defaultCacheSizeMb = 64;
   static const defaultSeekDurationSeconds = 10;
+  static const defaultDragSeekDurationSeconds = 600;
+  static const List<int> dragSeekDurationOptionsSeconds = [
+    120,
+    300,
+    600,
+    900,
+    1800,
+  ];
   static const List<int> seekDurationOptionsSeconds = [
     5,
     10,
@@ -27,6 +35,12 @@ class PlayerPreferences {
     return ((clamped / 5).round() * 5).clamp(5, 60).toInt();
   }
 
+  static int normalizeDragSeekDurationSeconds(int value) =>
+      dragSeekDurationOptionsSeconds.reduce(
+        (nearest, option) =>
+            (option - value).abs() < (nearest - value).abs() ? option : nearest,
+      );
+
   static int normalizeCacheSizeMb(int value) {
     final clamped = value.clamp(minCacheSizeMb, maxCacheSizeMb).toInt();
     return clamped.isEven ? clamped : clamped - 1;
@@ -42,6 +56,7 @@ class PlayerPreferences {
     this.cacheSizeMb = defaultCacheSizeMb,
     this.seekBackwardSeconds = defaultSeekDurationSeconds,
     this.seekForwardSeconds = defaultSeekDurationSeconds,
+    this.dragSeekDurationSeconds = defaultDragSeekDurationSeconds,
   });
 
   /// `null` means original quality; non-null values are bits per second.
@@ -54,6 +69,7 @@ class PlayerPreferences {
   final int cacheSizeMb;
   final int seekBackwardSeconds;
   final int seekForwardSeconds;
+  final int dragSeekDurationSeconds;
 
   factory PlayerPreferences.fromJson(Map<String, dynamic> json) {
     final bitrate = json['maxStreamingBitrate'];
@@ -62,6 +78,7 @@ class PlayerPreferences {
     final cacheSizeMb = json['cacheSizeMb'];
     final seekBackwardSeconds = json['seekBackwardSeconds'];
     final seekForwardSeconds = json['seekForwardSeconds'];
+    final dragSeekDurationSeconds = json['dragSeekDurationSeconds'];
     return PlayerPreferences(
       maxStreamingBitrate: bitrate is int && bitrate > 0 ? bitrate : null,
       subtitleLanguage: language is String ? language : '',
@@ -80,6 +97,9 @@ class PlayerPreferences {
       seekForwardSeconds: seekForwardSeconds is int
           ? normalizeSeekDurationSeconds(seekForwardSeconds)
           : defaultSeekDurationSeconds,
+      dragSeekDurationSeconds: dragSeekDurationSeconds is int
+          ? normalizeDragSeekDurationSeconds(dragSeekDurationSeconds)
+          : defaultDragSeekDurationSeconds,
     );
   }
 
@@ -93,6 +113,7 @@ class PlayerPreferences {
     int? cacheSizeMb,
     int? seekBackwardSeconds,
     int? seekForwardSeconds,
+    int? dragSeekDurationSeconds,
     bool clearMaxStreamingBitrate = false,
   }) => PlayerPreferences(
     maxStreamingBitrate: clearMaxStreamingBitrate
@@ -110,6 +131,9 @@ class PlayerPreferences {
     seekForwardSeconds: normalizeSeekDurationSeconds(
       seekForwardSeconds ?? this.seekForwardSeconds,
     ),
+    dragSeekDurationSeconds: normalizeDragSeekDurationSeconds(
+      dragSeekDurationSeconds ?? this.dragSeekDurationSeconds,
+    ),
   );
 
   Map<String, dynamic> toJson() => {
@@ -122,5 +146,6 @@ class PlayerPreferences {
     'cacheSizeMb': cacheSizeMb,
     'seekBackwardSeconds': seekBackwardSeconds,
     'seekForwardSeconds': seekForwardSeconds,
+    'dragSeekDurationSeconds': dragSeekDurationSeconds,
   };
 }

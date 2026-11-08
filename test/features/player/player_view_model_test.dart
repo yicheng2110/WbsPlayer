@@ -13,6 +13,24 @@ import 'package:wbs_player/features/player/view_models/player_view_model.dart';
 import 'package:wbs_player/features/servers/models/emby_media_detail.dart';
 
 void main() {
+  group('parseStreamLoadBytesPerSecond', () {
+    test('reads the raw input rate from mpv cache state', () {
+      expect(
+        parseStreamLoadBytesPerSecond('{"raw-input-rate": 2500000}'),
+        2500000,
+      );
+    });
+
+    test('returns null for missing, invalid, or negative rates', () {
+      expect(parseStreamLoadBytesPerSecond('{"idle": true}'), isNull);
+      expect(parseStreamLoadBytesPerSecond('not json'), isNull);
+      expect(
+        parseStreamLoadBytesPerSecond('{"raw-input-rate": -1}'),
+        isNull,
+      );
+    });
+  });
+
   test('opens at resume position, seeks and reports a session', () async {
     final requests = <http.Request>[];
     final client = MockClient((request) async {
@@ -114,6 +132,37 @@ void main() {
     },
   );
 
+  test('updates stream load speed when engine emits an input rate', () async {
+    final client = MockClient((_) async => http.Response('', 204));
+    final engine = _FakePlaybackEngine();
+    final viewModel = PlayerViewModel(
+      serverAddress: 'http://emby.test',
+      accessToken: '',
+      userId: 'user',
+      itemId: 'item',
+      detail: EmbyMediaDetail(id: 'item', name: 'Test', type: 'Movie'),
+      mediaSource: EmbyMediaSource(id: 'source', name: 'Source'),
+      audioStream: null,
+      playbackService: EmbyPlaybackService(client: client),
+      reporter: EmbyPlaybackReporter(client: client),
+      engine: engine,
+    );
+    addTearDown(() async {
+      viewModel.dispose();
+      await Future<void>.delayed(Duration.zero);
+      client.close();
+    });
+
+    engine.emitStreamLoadBytesPerSecond(2500000);
+    await Future<void>.delayed(Duration.zero);
+
+    expect(viewModel.state.streamLoadBytesPerSecond, 2500000);
+
+    engine.emitStreamLoadBytesPerSecond(null);
+    await Future<void>.delayed(Duration.zero);
+    expect(viewModel.state.streamLoadBytesPerSecond, isNull);
+  });
+
   test(
     'updates rate state and notifies listeners when engine emits rate',
     () async {
@@ -164,6 +213,7 @@ class _FakePlaybackEngine implements PlaybackEngine {
   final _width = StreamController<int?>.broadcast();
   final _height = StreamController<int?>.broadcast();
   final _audioBitrate = StreamController<double?>.broadcast();
+  final _streamLoadBytesPerSecond = StreamController<double?>.broadcast();
   final _rate = StreamController<double>.broadcast();
   final _error = StreamController<String>.broadcast();
 
@@ -200,6 +250,9 @@ class _FakePlaybackEngine implements PlaybackEngine {
   @override
   Stream<double?> get audioBitrateEvents => _audioBitrate.stream;
   @override
+  Stream<double?> get streamLoadBytesPerSecond =>
+      _streamLoadBytesPerSecond.stream;
+  @override
   Stream<double> get rate => _rate.stream;
   @override
   Stream<String> get error => _error.stream;
@@ -232,6 +285,8 @@ class _FakePlaybackEngine implements PlaybackEngine {
   @override
   Future<void> setRate(double rate) async => _rate.add(rate);
   void emitRate(double rate) => _rate.add(rate);
+  void emitStreamLoadBytesPerSecond(double rate) =>
+      _streamLoadBytesPerSecond.add(rate);
   @override
   Future<void> setHardwareDecoderMode(HardwareDecoderMode mode) async {
     decoderMode = mode;
@@ -262,6 +317,7 @@ class _FakePlaybackEngine implements PlaybackEngine {
       _width.close(),
       _height.close(),
       _audioBitrate.close(),
+      _streamLoadBytesPerSecond.close(),
       _rate.close(),
       _error.close(),
     ]);

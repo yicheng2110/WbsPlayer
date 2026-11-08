@@ -86,6 +86,33 @@ class PlayerSettingsPage extends StatelessWidget {
           ),
         ),
         ListTile(
+          key: const Key('player-drag-seek-duration-setting'),
+          leading: const Icon(Icons.swipe_right_alt_rounded),
+          title: Text(l10n.playerDragSeekDuration),
+          trailing: DropdownButton<int>(
+            value: playerPreferences.dragSeekDurationSeconds,
+            items: [
+              for (final seconds
+                  in PlayerPreferences.dragSeekDurationOptionsSeconds)
+                DropdownMenuItem(
+                  value: seconds,
+                  child: Text(l10n.playerDragSeekDurationValue(seconds ~/ 60)),
+                ),
+            ],
+            onChanged: arePlayerPreferencesLoaded
+                ? (value) {
+                    if (value != null) {
+                      onPlayerPreferencesChanged(
+                        playerPreferences.copyWith(
+                          dragSeekDurationSeconds: value,
+                        ),
+                      );
+                    }
+                  }
+                : null,
+          ),
+        ),
+        ListTile(
           key: const Key('player-subtitle-language-setting'),
           title: Text(l10n.playerSubtitleLanguage),
           leading: const Icon(Icons.subtitles_outlined),

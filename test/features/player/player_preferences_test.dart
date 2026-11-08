@@ -2,6 +2,34 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:wbs_player/features/player/models/player_preferences.dart';
 
 void main() {
+  group('PlayerPreferences drag-seek settings', () {
+    test('defaults to a ten-minute range and persists configured values', () {
+      const defaults = PlayerPreferences();
+      expect(
+        defaults.dragSeekDurationSeconds,
+        PlayerPreferences.defaultDragSeekDurationSeconds,
+      );
+
+      final configured = defaults.copyWith(dragSeekDurationSeconds: 900);
+      expect(configured.dragSeekDurationSeconds, 900);
+      expect(
+        PlayerPreferences.fromJson(configured.toJson()).dragSeekDurationSeconds,
+        900,
+      );
+      expect(PlayerPreferences.fromJson({}).dragSeekDurationSeconds, 600);
+    });
+
+    test('normalizes unsupported durations to the nearest option', () {
+      expect(PlayerPreferences.normalizeDragSeekDurationSeconds(700), 600);
+      expect(PlayerPreferences.normalizeDragSeekDurationSeconds(800), 900);
+      expect(
+        PlayerPreferences.fromJson({'dragSeekDurationSeconds': 5000})
+            .dragSeekDurationSeconds,
+        1800,
+      );
+    });
+  });
+
   group('PlayerPreferences cache settings', () {
     test('uses enabled 64 MB cache by default', () {
       const preferences = PlayerPreferences();

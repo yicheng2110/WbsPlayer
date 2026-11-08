@@ -469,6 +469,14 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get playerDragSeekDuration => '横向拖动跨度';
+
+  @override
+  String playerDragSeekDurationValue(int minutes) {
+    return '$minutes 分钟';
+  }
+
+  @override
   String get playerRetry => '重试';
 
   @override
@@ -556,6 +564,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get playerStatsAudio => '音频';
+
+  @override
+  String get playerStatsNetworkSpeed => '流加载网速';
 
   @override
   String get playerStatsBuffer => '缓冲';

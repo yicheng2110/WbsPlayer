@@ -237,6 +237,37 @@ void main() {
     await tester.pumpWidget(const SizedBox());
   });
 
+  testWidgets('maps horizontal drag to the configured seek duration', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(400, 300));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    Duration? target;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: PlayerGestureLayer(
+          duration: const Duration(minutes: 30),
+          position: const Duration(minutes: 15),
+          volume: 100,
+          seekDuration: const Duration(minutes: 10),
+          onSeek: (value) => target = value,
+          onVolumeChanged: (_) {},
+          onTap: () {},
+          onDoubleTap: () {},
+        ),
+      ),
+    );
+
+    final gesture = await tester.startGesture(const Offset(20, 150));
+    await gesture.moveTo(const Offset(380, 150));
+    await tester.pump(const Duration(milliseconds: 100));
+    await gesture.up();
+    await tester.pump();
+
+    expect(target, const Duration(minutes: 24));
+    await tester.pumpWidget(const SizedBox());
+  });
+
   testWidgets('holds auto-hide during scrubbing and seeks on release', (
     tester,
   ) async {
@@ -342,6 +373,56 @@ void main() {
       expect(volumeChanges, 0);
     },
   );
+
+  testWidgets('single tap toggles controls without pan-cancel interference', (
+    tester,
+  ) async {
+    final key = GlobalKey<PlayerOsdControlsState>();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          backgroundColor: Colors.black,
+          body: Stack(
+            fit: StackFit.expand,
+            children: [
+              PlayerGestureLayer(
+                duration: Duration.zero,
+                position: Duration.zero,
+                volume: 100,
+                onSeek: (_) {},
+                onVolumeChanged: (_) {},
+                onTap: () => key.currentState?.toggleControls(),
+                onDoubleTap: () {},
+              ),
+              PlayerOsdControls(
+                key: key,
+                title: 'Test movie',
+                state: const PlayerSessionState(isPlaying: true),
+                onBack: () {},
+                onPlayPause: () {},
+                onSeek: (_) {},
+                onTracks: () {},
+                onRetry: () {},
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    expect(key.currentState!.isVisible, isTrue);
+
+    await tester.pump(const Duration(seconds: 3));
+    expect(key.currentState!.isVisible, isFalse);
+
+    await tester.tapAt(const Offset(200, 200));
+    await tester.pump(const Duration(milliseconds: 350));
+    expect(key.currentState!.isVisible, isTrue);
+
+    await tester.tapAt(const Offset(200, 200));
+    await tester.pump(const Duration(milliseconds: 350));
+    expect(key.currentState!.isVisible, isFalse);
+    await tester.pumpWidget(const SizedBox());
+  });
 
   testWidgets('auto-hides after three seconds and stays visible while paused', (
     tester,

@@ -1,7 +1,23 @@
+import 'dart:async';
+import 'dart:convert';
+
 import 'package:media_kit/media_kit.dart';
 
 import '../models/hardware_decoder_mode.dart';
 import '../models/player_preferences.dart';
+
+/// Parses mpv's estimated network input rate from its cache-state JSON.
+double? parseStreamLoadBytesPerSecond(String json) {
+  try {
+    final state = jsonDecode(json);
+    final rate = state is Map<String, dynamic>
+        ? state['raw-input-rate']
+        : null;
+    return rate is num && rate >= 0 ? rate.toDouble() : null;
+  } on FormatException {
+    return null;
+  }
+}
 
 /// Minimal playback-engine contract so ViewModels can be tested without
 /// initializing the native libmpv backend.
@@ -19,6 +35,7 @@ abstract interface class PlaybackEngine {
   Stream<int?> get videoWidth;
   Stream<int?> get videoHeight;
   Stream<double?> get audioBitrateEvents;
+  Stream<double?> get streamLoadBytesPerSecond;
   Stream<double> get rate;
   Stream<String> get error;
   int? get width;
@@ -61,6 +78,9 @@ class MediaKitPlaybackEngine implements PlaybackEngine {
 
   final bool cacheEnabled;
   final int cacheSizeMb;
+  final StreamController<double?> _streamLoadController =
+      StreamController<double?>.broadcast();
+  bool _observingCacheState = false;
 
   final Player player;
 
@@ -93,6 +113,9 @@ class MediaKitPlaybackEngine implements PlaybackEngine {
   @override
   Stream<double?> get audioBitrateEvents => player.stream.audioBitrate;
   @override
+  Stream<double?> get streamLoadBytesPerSecond =>
+      _streamLoadController.stream;
+  @override
   Stream<String> get error => player.stream.error;
   @override
   int? get width => player.state.videoParams.w;
@@ -106,7 +129,25 @@ class MediaKitPlaybackEngine implements PlaybackEngine {
   @override
   Future<void> open(Media media) async {
     await _configureCache();
+    await _observeStreamLoadRate();
     await player.open(media);
+  }
+
+  Future<void> _observeStreamLoadRate() async {
+    final platform = player.platform;
+    if (platform is! NativePlayer || _observingCacheState) return;
+    try {
+      await platform.observeProperty('demuxer-cache-state', (json) async {
+        if (!_streamLoadController.isClosed) {
+          _streamLoadController.add(parseStreamLoadBytesPerSecond(json));
+        }
+      });
+      _observingCacheState = true;
+    } on UnsupportedError {
+      // mpv properties are unavailable on non-native platforms.
+    } catch (_) {
+      // A missing mpv property should not prevent playback from opening.
+    }
   }
 
   Future<void> _configureCache() async {
@@ -160,5 +201,18 @@ class MediaKitPlaybackEngine implements PlaybackEngine {
   Future<void> setSubtitleTrack(SubtitleTrack track) =>
       player.setSubtitleTrack(track);
   @override
-  Future<void> dispose() => player.dispose();
+  Future<void> dispose() async {
+    final platform = player.platform;
+    if (platform is NativePlayer && _observingCacheState) {
+      try {
+        await platform.unobserveProperty('demuxer-cache-state');
+      } on UnsupportedError {
+        // mpv properties are unavailable on non-native platforms.
+      } catch (_) {
+        // Ignore teardown errors while disposing the player.
+      }
+    }
+    await _streamLoadController.close();
+    await player.dispose();
+  }
 }

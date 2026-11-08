@@ -120,6 +120,7 @@ String _playerText(BuildContext context, String key) {
     'playerInvalidPlaybackResponse' => l10n.playerInvalidPlaybackResponse,
     'playerStatsVideo' => l10n.playerStatsVideo,
     'playerStatsAudio' => l10n.playerStatsAudio,
+    'playerStatsNetworkSpeed' => l10n.playerStatsNetworkSpeed,
     'playerStatsBuffer' => l10n.playerStatsBuffer,
     'playerStatsVolume' => l10n.playerStatsVolume,
     'playerStatsMethod' => l10n.playerStatsMethod,

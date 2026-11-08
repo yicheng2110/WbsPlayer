@@ -480,6 +480,14 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get playerDragSeekDuration => 'Swipe seek range';
+
+  @override
+  String playerDragSeekDurationValue(int minutes) {
+    return '$minutes min';
+  }
+
+  @override
   String get playerRetry => 'Retry';
 
   @override
@@ -572,6 +580,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get playerStatsAudio => 'Audio';
+
+  @override
+  String get playerStatsNetworkSpeed => 'Stream load speed';
 
   @override
   String get playerStatsBuffer => 'Buffer';

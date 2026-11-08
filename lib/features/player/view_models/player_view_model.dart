@@ -76,6 +76,7 @@ class PlayerViewModel extends ChangeNotifier {
     _state = _state.copyWith(
       position: _openedBefore ? _state.position : _resumePosition,
       isCompleted: false,
+      clearStreamLoadRate: true,
       clearError: true,
     );
     notifyListeners();
@@ -302,6 +303,13 @@ class PlayerViewModel extends ChangeNotifier {
       _state = _state.copyWith(audioBitrate: bitrate);
       notifyListeners();
     });
+    _listen<double?>(_engine.streamLoadBytesPerSecond, (rate) {
+      _state = _state.copyWith(
+        streamLoadBytesPerSecond: rate,
+        clearStreamLoadRate: rate == null,
+      );
+      notifyListeners();
+    });
     _listen<Duration>(_engine.buffer, (buffered) {
       _state = _state.copyWith(buffered: buffered);
       notifyListeners();
@@ -370,7 +378,7 @@ class PlayerViewModel extends ChangeNotifier {
   Future<void> _retryWithTranscoding(String directError) async {
     if (_disposed) return;
     _isOpening = true;
-    _state = _state.copyWith(clearError: true);
+    _state = _state.copyWith(clearError: true, clearStreamLoadRate: true);
     notifyListeners();
     if (_hasReportedStart) {
       await stop();

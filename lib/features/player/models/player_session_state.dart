@@ -16,6 +16,7 @@ class PlayerSessionState {
     this.videoCodec,
     this.audioCodec,
     this.audioBitrate,
+    this.streamLoadBytesPerSecond,
     this.isPlaying = false,
     this.isBuffering = false,
     this.isCompleted = false,
@@ -35,6 +36,7 @@ class PlayerSessionState {
   final String? videoCodec;
   final String? audioCodec;
   final double? audioBitrate;
+  final double? streamLoadBytesPerSecond;
   final bool isPlaying;
   final bool isBuffering;
   final bool isCompleted;
@@ -56,6 +58,8 @@ class PlayerSessionState {
     String? videoCodec,
     String? audioCodec,
     double? audioBitrate,
+    double? streamLoadBytesPerSecond,
+    bool clearStreamLoadRate = false,
     bool? isPlaying,
     bool? isBuffering,
     bool? isCompleted,
@@ -75,6 +79,9 @@ class PlayerSessionState {
     videoCodec: videoCodec ?? this.videoCodec,
     audioCodec: audioCodec ?? this.audioCodec,
     audioBitrate: audioBitrate ?? this.audioBitrate,
+    streamLoadBytesPerSecond: clearStreamLoadRate
+        ? null
+        : streamLoadBytesPerSecond ?? this.streamLoadBytesPerSecond,
     isPlaying: isPlaying ?? this.isPlaying,
     isBuffering: isBuffering ?? this.isBuffering,
     isCompleted: isCompleted ?? this.isCompleted,

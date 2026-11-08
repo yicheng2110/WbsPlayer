@@ -7,6 +7,33 @@ import 'package:wbs_player/features/settings/views/settings_page.dart';
 import 'package:wbs_player/l10n/generated/app_localizations.dart';
 
 void main() {
+  testWidgets('configures the swipe seek range', (tester) async {
+    final preferences = ValueNotifier(const PlayerPreferences());
+    addTearDown(preferences.dispose);
+    await tester.pumpWidget(_SettingsHarness(preferences: preferences));
+    await tester.tap(find.byKey(const Key('player-settings-entry')));
+    await tester.pumpAndSettle();
+
+    final setting = find.byKey(const Key('player-drag-seek-duration-setting'));
+    await tester.ensureVisible(setting);
+    await tester.pump();
+    final dropdown = tester.widget<DropdownButton<int>>(
+      find.descendant(of: setting, matching: find.byType(DropdownButton<int>)),
+    );
+    expect(dropdown.value, 600);
+    expect(dropdown.items!.map((item) => item.value), [
+      120,
+      300,
+      600,
+      900,
+      1800,
+    ]);
+
+    dropdown.onChanged!(900);
+    await tester.pump();
+    expect(preferences.value.dragSeekDurationSeconds, 900);
+  });
+
   testWidgets('configures the playback cache switch and size slider', (
     tester,
   ) async {

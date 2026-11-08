@@ -992,6 +992,18 @@ abstract class AppLocalizations {
   /// **'{seconds} 秒'**
   String playerSeekSecondsValue(int seconds);
 
+  /// Full-screen horizontal drag maps to this duration.
+  ///
+  /// In zh, this message translates to:
+  /// **'横向拖动跨度'**
+  String get playerDragSeekDuration;
+
+  /// Duration represented by a full-width horizontal drag.
+  ///
+  /// In zh, this message translates to:
+  /// **'{minutes} 分钟'**
+  String playerDragSeekDurationValue(int minutes);
+
   /// No description provided for @playerRetry.
   ///
   /// In zh, this message translates to:
@@ -1165,6 +1177,12 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'音频'**
   String get playerStatsAudio;
+
+  /// Current estimated stream input speed.
+  ///
+  /// In zh, this message translates to:
+  /// **'流加载网速'**
+  String get playerStatsNetworkSpeed;
 
   /// No description provided for @playerStatsBuffer.
   ///

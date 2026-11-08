@@ -360,6 +360,10 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
                       duration: state.duration,
                       position: state.position,
                       volume: state.volume,
+                      seekDuration: Duration(
+                        seconds:
+                            widget.args.preferences.dragSeekDurationSeconds,
+                      ),
                       onSeek: (position) =>
                           unawaited(_viewModel.seek(position)),
                       onVolumeChanged: (volume) =>
@@ -526,6 +530,9 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
                   '${_text('playerStatsAudio', 'Audio')}: ${state.audioCodec ?? '—'} ${_formatBitrate(state.audioBitrate)}',
                 ),
                 Text(
+                  '${_text('playerStatsNetworkSpeed', 'Stream load speed')}: ${_formatNetworkSpeed(state.streamLoadBytesPerSecond)}',
+                ),
+                Text(
                   '${_text('playerStatsBuffer', 'Buffer')}: ${_formatDuration(state.buffered)}',
                 ),
                 Text(
@@ -601,6 +608,10 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
   String _formatBitrate(double? bitsPerSecond) => bitsPerSecond == null
       ? ''
       : '${(bitsPerSecond / 1000000).toStringAsFixed(1)} Mbps';
+
+  String _formatNetworkSpeed(double? bytesPerSecond) => bytesPerSecond == null
+      ? '—'
+      : '${(bytesPerSecond * 8 / 1000000).toStringAsFixed(1)} Mbps';
 
   String _playbackError(String error) {
     final code = RegExp(r'EmbyPlaybackException\(([^,)]+)')
