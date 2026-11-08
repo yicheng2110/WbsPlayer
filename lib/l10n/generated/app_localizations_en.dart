@@ -19,6 +19,29 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsTitle => 'Settings';
 
   @override
+  String get globalSettings => 'Global settings';
+
+  @override
+  String get clearCache => 'Clear cache';
+
+  @override
+  String get clearCacheDescription =>
+      'Remove cached Emby images and media information';
+
+  @override
+  String get clearCacheConfirmation =>
+      'Cached images and media information will be deleted. Server and account details will remain. Continue?';
+
+  @override
+  String get cacheCleared => 'Cache cleared';
+
+  @override
+  String get cacheClearFailed => 'Could not clear cache. Please try again.';
+
+  @override
+  String get clear => 'Clear';
+
+  @override
   String get moreOptions => 'More options';
 
   @override

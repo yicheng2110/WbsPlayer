@@ -5,6 +5,7 @@ import '../models/emby_media_detail.dart';
 import '../models/emby_server.dart';
 import '../services/emby_media_detail_service.dart';
 import '../services/emby_library_service.dart';
+import '../widgets/emby_cached_image.dart';
 
 class EmbySeasonPage extends StatefulWidget {
   const EmbySeasonPage({
@@ -230,10 +231,9 @@ class _EpisodeTile extends StatelessWidget {
                             ),
                           ),
                         )
-                      : Image.network(
-                          imageUri.toString(),
+                      : EmbyCachedImage(
+                          uri: imageUri,
                           headers: {'X-Emby-Token': server.accessToken},
-                          cacheWidth: 440,
                           fit: BoxFit.cover,
                           errorBuilder: (_, _, _) => const ColoredBox(
                             color: AppColors.mediaBackground,

@@ -12,12 +12,14 @@ class SettingsPage extends StatelessWidget {
     required this.isLocaleLoaded,
     required this.onLocalePreferenceSelected,
     required this.onPlayerSettingsTap,
+    this.onGlobalSettingsTap,
   });
 
   final LocalePreference localePreference;
   final bool isLocaleLoaded;
   final Future<void> Function(LocalePreference) onLocalePreferenceSelected;
   final VoidCallback onPlayerSettingsTap;
+  final VoidCallback? onGlobalSettingsTap;
 
   @override
   Widget build(BuildContext context) {
@@ -41,6 +43,14 @@ class SettingsPage extends StatelessWidget {
           title: Text(l10n.playerSettings),
           trailing: const Icon(Icons.chevron_right),
           onTap: onPlayerSettingsTap,
+        ),
+        ListTile(
+          key: const Key('global-settings-entry'),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+          leading: const Icon(Icons.settings_outlined, size: 28),
+          title: Text(l10n.globalSettings),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: onGlobalSettingsTap,
         ),
         const ReleaseUpdateTile(),
       ],

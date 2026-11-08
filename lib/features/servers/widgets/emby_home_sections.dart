@@ -7,6 +7,7 @@ import '../../../ui/core/app_colors.dart';
 import '../models/emby_media.dart';
 import '../models/emby_server.dart';
 import '../services/emby_library_service.dart';
+import 'emby_cached_image.dart';
 
 class FeaturedCarousel extends StatefulWidget {
   const FeaturedCarousel({
@@ -437,18 +438,16 @@ class EmbyPosterImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Image.network(
-      service
-          .imageUri(
-            serverAddress: server.address,
-            itemId: item.id,
-            imageType: imageType,
-            imageTag: imageType == 'Backdrop'
-                ? item.backdropImageTag
-                : item.primaryImageTag,
-            maxWidth: maxWidth,
-          )
-          .toString(),
+    return EmbyCachedImage(
+      uri: service.imageUri(
+        serverAddress: server.address,
+        itemId: item.id,
+        imageType: imageType,
+        imageTag: imageType == 'Backdrop'
+            ? item.backdropImageTag
+            : item.primaryImageTag,
+        maxWidth: maxWidth,
+      ),
       headers: {'X-Emby-Token': accessToken ?? server.accessToken},
       fit: fit,
       filterQuality: FilterQuality.medium,

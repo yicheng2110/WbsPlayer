@@ -4,6 +4,7 @@ import '../../../ui/core/app_colors.dart';
 import '../models/emby_media_detail.dart';
 import '../models/emby_server.dart';
 import '../services/emby_library_service.dart';
+import 'emby_cached_image.dart';
 
 /// Uses host-provided translations and keeps stable keys as visible fallbacks.
 typedef EmbyMediaDetailText = String Function(String key);
@@ -414,8 +415,8 @@ class EmbyMediaDetailHero extends StatelessWidget {
   );
 
   Widget _networkImage(Uri uri, {required BoxFit fit, Widget? fallback}) =>
-      Image.network(
-        uri.toString(),
+      EmbyCachedImage(
+        uri: uri,
         headers: {'X-Emby-Token': server.accessToken},
         fit: fit,
         filterQuality: FilterQuality.medium,
@@ -653,8 +654,8 @@ class _SeasonRail extends StatelessWidget {
                       child: SizedBox.expand(
                         child: season.primaryImageTag == null
                             ? const _ImageFallback()
-                            : Image.network(
-                                imageUri.toString(),
+                            : EmbyCachedImage(
+                                uri: imageUri,
                                 headers: {'X-Emby-Token': server.accessToken},
                                 fit: BoxFit.cover,
                                 errorBuilder: (_, _, _) =>
@@ -768,8 +769,8 @@ class _ActorsRail extends StatelessWidget {
       imageTag: tag,
       maxWidth: 280,
     );
-    return Image.network(
-      uri.toString(),
+    return EmbyCachedImage(
+      uri: uri,
       headers: {'X-Emby-Token': server.accessToken},
       fit: BoxFit.cover,
       errorBuilder: (_, _, _) => const _ImageFallback(),
@@ -843,8 +844,8 @@ class _ImageRail extends StatelessWidget {
             borderRadius: BorderRadius.circular(11),
             child: SizedBox(
               width: width,
-              child: Image.network(
-                uri.toString(),
+              child: EmbyCachedImage(
+                uri: uri,
                 headers: {'X-Emby-Token': server.accessToken},
                 fit: BoxFit.cover,
                 errorBuilder: (_, _, _) => const _ImageFallback(),
@@ -908,8 +909,8 @@ class _SimilarRail extends StatelessWidget {
                     child: SizedBox(
                       width: width,
                       height: width * 1.28,
-                      child: Image.network(
-                        uri.toString(),
+                      child: EmbyCachedImage(
+                        uri: uri,
                         headers: {'X-Emby-Token': server.accessToken},
                         fit: BoxFit.cover,
                         errorBuilder: (_, _, _) => const _ImageFallback(),
@@ -1133,13 +1134,13 @@ class _Poster extends StatelessWidget {
         height: width * 1.46,
         child: image == null
             ? const _ImageFallback()
-            : Image.network(
-                embyMediaDetailImageUri(
+            : EmbyCachedImage(
+                uri: embyMediaDetailImageUri(
                   libraryService: libraryService,
                   server: server,
                   image: image,
                   maxWidth: 620,
-                ).toString(),
+                ),
                 headers: {'X-Emby-Token': server.accessToken},
                 fit: BoxFit.cover,
                 errorBuilder: (_, _, _) => const _ImageFallback(),

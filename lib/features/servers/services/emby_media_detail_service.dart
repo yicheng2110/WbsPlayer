@@ -458,7 +458,6 @@ class EmbyMediaDetailService {
         body: {'Id': itemId, 'UserId': userId},
       ),
       forceRefresh: forceRefresh,
-      persistValue: false,
     );
     final response = _asMap(payload);
     final sourcePayload = response?['MediaSources'];

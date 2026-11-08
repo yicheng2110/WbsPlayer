@@ -116,6 +116,48 @@ abstract class AppLocalizations {
   /// **'设置'**
   String get settingsTitle;
 
+  /// No description provided for @globalSettings.
+  ///
+  /// In zh, this message translates to:
+  /// **'全局配置'**
+  String get globalSettings;
+
+  /// No description provided for @clearCache.
+  ///
+  /// In zh, this message translates to:
+  /// **'清空缓存'**
+  String get clearCache;
+
+  /// No description provided for @clearCacheDescription.
+  ///
+  /// In zh, this message translates to:
+  /// **'清除 Emby 图片和媒体信息缓存'**
+  String get clearCacheDescription;
+
+  /// No description provided for @clearCacheConfirmation.
+  ///
+  /// In zh, this message translates to:
+  /// **'将删除已缓存的图片和媒体信息。此操作不会删除服务器或账号信息，是否继续？'**
+  String get clearCacheConfirmation;
+
+  /// No description provided for @cacheCleared.
+  ///
+  /// In zh, this message translates to:
+  /// **'缓存已清空'**
+  String get cacheCleared;
+
+  /// No description provided for @cacheClearFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'清空缓存失败，请重试'**
+  String get cacheClearFailed;
+
+  /// No description provided for @clear.
+  ///
+  /// In zh, this message translates to:
+  /// **'清空'**
+  String get clear;
+
   /// No description provided for @moreOptions.
   ///
   /// In zh, this message translates to:

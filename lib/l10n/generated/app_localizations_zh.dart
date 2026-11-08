@@ -19,6 +19,27 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsTitle => '设置';
 
   @override
+  String get globalSettings => '全局配置';
+
+  @override
+  String get clearCache => '清空缓存';
+
+  @override
+  String get clearCacheDescription => '清除 Emby 图片和媒体信息缓存';
+
+  @override
+  String get clearCacheConfirmation => '将删除已缓存的图片和媒体信息。此操作不会删除服务器或账号信息，是否继续？';
+
+  @override
+  String get cacheCleared => '缓存已清空';
+
+  @override
+  String get cacheClearFailed => '清空缓存失败，请重试';
+
+  @override
+  String get clear => '清空';
+
+  @override
   String get moreOptions => '更多选项';
 
   @override

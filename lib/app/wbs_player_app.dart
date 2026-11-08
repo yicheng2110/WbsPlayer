@@ -22,6 +22,7 @@ import '../features/servers/views/emby_library_page.dart';
 import '../features/servers/views/emby_media_detail_page.dart';
 import '../features/servers/views/emby_season_page.dart';
 import '../features/servers/views/server_home_page.dart';
+import '../features/settings/views/global_settings_page.dart';
 import '../features/settings/views/player_settings_page.dart';
 import '../l10n/app_localizations_context.dart';
 import '../l10n/generated/app_localizations.dart';
@@ -256,9 +257,14 @@ class _WbsPlayerAppState extends State<WbsPlayerApp> {
             localePreferenceListenable: _localePreferenceNotifier,
             localeLoadedListenable: _localeLoadedNotifier,
             onPlayerSettingsTap: () => context.push('/settings/player'),
+            onGlobalSettingsTap: () => context.push('/settings/global'),
           ),
         ),
         routes: [
+          GoRoute(
+            path: 'settings/global',
+            builder: (context, state) => const GlobalSettingsPage(),
+          ),
           GoRoute(
             path: 'settings/player',
             builder: (context, state) => Scaffold(
