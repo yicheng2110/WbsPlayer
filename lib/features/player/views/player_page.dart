@@ -364,9 +364,23 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
                           unawaited(_viewModel.seek(position)),
                       onVolumeChanged: (volume) =>
                           unawaited(_viewModel.setVolume(volume)),
-                      onTap: () => _osdKey.currentState?.showControls(),
+                      onTap: () => _controlsLocked
+                          ? _osdKey.currentState?.showControls()
+                          : _osdKey.currentState?.toggleControls(),
                       onDoubleTap: () =>
                           unawaited(_viewModel.togglePlayPause()),
+                      onDoubleTapSeek: (forward) {
+                        final seconds = forward
+                            ? widget.args.preferences.seekForwardSeconds
+                            : widget.args.preferences.seekBackwardSeconds;
+                        final offset = Duration(
+                          seconds: forward ? seconds : -seconds,
+                        );
+                        _osdKey.currentState?.showControls();
+                        unawaited(
+                          _viewModel.seek(_viewModel.state.position + offset),
+                        );
+                      },
                       onPreviewChanged: (position) {
                         if (mounted) {
                           setState(() => _isSeeking = position != null);

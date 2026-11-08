@@ -469,6 +469,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get playerForward10 => 'Forward 10 seconds';
 
   @override
+  String get playerSeekBackward => 'Double-tap rewind';
+
+  @override
+  String get playerSeekForward => 'Double-tap forward';
+
+  @override
+  String playerSeekSecondsValue(int seconds) {
+    return '$seconds sec';
+  }
+
+  @override
   String get playerRetry => 'Retry';
 
   @override

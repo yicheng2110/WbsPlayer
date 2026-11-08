@@ -85,6 +85,15 @@ class PlayerOsdControlsState extends State<PlayerOsdControls> {
     _scheduleHide();
   }
 
+  void toggleControls() {
+    if (_visible) {
+      _hideTimer?.cancel();
+      setState(() => _visible = false);
+    } else {
+      showControls();
+    }
+  }
+
   void setGestureActive(bool active) {
     _gestureActive = active;
     showControls();

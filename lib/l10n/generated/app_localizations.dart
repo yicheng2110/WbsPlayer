@@ -974,6 +974,24 @@ abstract class AppLocalizations {
   /// **'前进 10 秒'**
   String get playerForward10;
 
+  /// No description provided for @playerSeekBackward.
+  ///
+  /// In zh, this message translates to:
+  /// **'双击后退'**
+  String get playerSeekBackward;
+
+  /// No description provided for @playerSeekForward.
+  ///
+  /// In zh, this message translates to:
+  /// **'双击快进'**
+  String get playerSeekForward;
+
+  /// No description provided for @playerSeekSecondsValue.
+  ///
+  /// In zh, this message translates to:
+  /// **'{seconds} 秒'**
+  String playerSeekSecondsValue(int seconds);
+
   /// No description provided for @playerRetry.
   ///
   /// In zh, this message translates to:

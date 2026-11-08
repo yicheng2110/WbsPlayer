@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:screen_brightness/screen_brightness.dart';
 
 /// Seek, volume, brightness and double-tap gesture surface.
@@ -12,6 +15,7 @@ class PlayerGestureLayer extends StatefulWidget {
     required this.onVolumeChanged,
     required this.onTap,
     required this.onDoubleTap,
+    this.onDoubleTapSeek,
     this.locked = false,
     this.onPreviewChanged,
     this.onActivity,
@@ -27,6 +31,7 @@ class PlayerGestureLayer extends StatefulWidget {
   final ValueChanged<double> onVolumeChanged;
   final VoidCallback onTap;
   final VoidCallback onDoubleTap;
+  final ValueChanged<bool>? onDoubleTapSeek;
   final ValueChanged<Duration?>? onPreviewChanged;
   final VoidCallback? onActivity;
   final ValueChanged<bool>? onInteractionChanged;
@@ -38,6 +43,7 @@ class PlayerGestureLayer extends StatefulWidget {
 
 class _PlayerGestureLayerState extends State<PlayerGestureLayer> {
   Offset? _start;
+  Duration? _startPosition;
   Duration? _preview;
   double _startValue = 0;
   bool _isHorizontalSeek = false;
@@ -47,6 +53,8 @@ class _PlayerGestureLayerState extends State<PlayerGestureLayer> {
   Future<double>? _brightnessRead;
   int _gestureGeneration = 0;
   String? _indicator;
+  double? _doubleTapX;
+  int? _lastHapticTick;
 
   String _text(String key, String fallback) =>
       widget.text?.call(key) ?? fallback;
@@ -56,7 +64,12 @@ class _PlayerGestureLayerState extends State<PlayerGestureLayer> {
     builder: (context, constraints) => GestureDetector(
       behavior: HitTestBehavior.translucent,
       onTap: widget.onTap,
-      onDoubleTap: widget.locked ? null : widget.onDoubleTap,
+      onDoubleTapDown: widget.locked
+          ? null
+          : (details) => _doubleTapX = details.localPosition.dx,
+      onDoubleTap: widget.locked
+          ? null
+          : () => _handleDoubleTap(constraints.maxWidth),
       onPanStart: widget.locked
           ? null
           : (details) => _onPanStart(details, constraints.biggest),
@@ -97,12 +110,14 @@ class _PlayerGestureLayerState extends State<PlayerGestureLayer> {
     widget.onInteractionChanged?.call(true);
     widget.onActivity?.call();
     _start = details.localPosition;
+    _startPosition = widget.position;
     _startValue = 0;
     _isHorizontalSeek = false;
     _isVerticalAdjust = false;
     _adjustBrightness = details.localPosition.dx < size.width / 2;
     _indicator = null;
-    _preview = widget.position;
+    _preview = _startPosition;
+    _lastHapticTick = _startPosition!.inSeconds ~/ 5;
   }
 
   Future<void> _onPanUpdate(DragUpdateDetails details, Size size) async {
@@ -134,7 +149,7 @@ class _PlayerGestureLayerState extends State<PlayerGestureLayer> {
     if (_isHorizontalSeek) {
       final seconds = delta.dx / size.width * 120;
       final milliseconds =
-          widget.position.inMilliseconds + (seconds * 1000).round();
+          _startPosition!.inMilliseconds + (seconds * 1000).round();
       final maximum = widget.duration.inMilliseconds;
       final candidate = Duration(
         milliseconds: maximum > 0
@@ -142,6 +157,14 @@ class _PlayerGestureLayerState extends State<PlayerGestureLayer> {
             : milliseconds.clamp(0, 1 << 31),
       );
       _preview = candidate;
+      final hapticTick = candidate.inSeconds ~/ 5;
+      if (_lastHapticTick != hapticTick) {
+        final tickDelta = (hapticTick - _lastHapticTick!).abs();
+        _lastHapticTick = hapticTick;
+        for (var tick = 0; tick < tickDelta; tick++) {
+          unawaited(HapticFeedback.selectionClick().catchError((Object _) {}));
+        }
+      }
       _indicator = '${_text('playerSeek', 'Seek')}: ${_format(candidate)}';
       widget.onPreviewChanged?.call(candidate);
       setState(() {});
@@ -166,6 +189,23 @@ class _PlayerGestureLayerState extends State<PlayerGestureLayer> {
     }
   }
 
+  void _handleDoubleTap(double width) {
+    widget.onActivity?.call();
+    final tapX = _doubleTapX;
+    _doubleTapX = null;
+    if (tapX != null && widget.onDoubleTapSeek != null) {
+      if (tapX < width / 3) {
+        widget.onDoubleTapSeek!(false);
+        return;
+      }
+      if (tapX > width * 2 / 3) {
+        widget.onDoubleTapSeek!(true);
+        return;
+      }
+    }
+    widget.onDoubleTap();
+  }
+
   Future<double> _readBrightness() async {
     try {
       return await ScreenBrightness().application;
@@ -185,6 +225,7 @@ class _PlayerGestureLayerState extends State<PlayerGestureLayer> {
     widget.onActivity?.call();
     widget.onPreviewChanged?.call(null);
     _start = null;
+    _startPosition = null;
     _preview = null;
     _isHorizontalSeek = false;
     _isVerticalAdjust = false;

@@ -458,6 +458,17 @@ class AppLocalizationsZh extends AppLocalizations {
   String get playerForward10 => '前进 10 秒';
 
   @override
+  String get playerSeekBackward => '双击后退';
+
+  @override
+  String get playerSeekForward => '双击快进';
+
+  @override
+  String playerSeekSecondsValue(int seconds) {
+    return '$seconds 秒';
+  }
+
+  @override
   String get playerRetry => '重试';
 
   @override

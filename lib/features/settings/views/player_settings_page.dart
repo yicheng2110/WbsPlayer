@@ -36,13 +36,67 @@ class PlayerSettingsPage extends StatelessWidget {
               : null,
         ),
         ListTile(
+          key: const Key('player-seek-backward-setting'),
+          leading: const Icon(Icons.replay_rounded),
+          title: Text(l10n.playerSeekBackward),
+          trailing: DropdownButton<int>(
+            value: playerPreferences.seekBackwardSeconds,
+            items: [
+              for (final seconds
+                  in PlayerPreferences.seekDurationOptionsSeconds)
+                DropdownMenuItem(
+                  value: seconds,
+                  child: Text(l10n.playerSeekSecondsValue(seconds)),
+                ),
+            ],
+            onChanged: arePlayerPreferencesLoaded
+                ? (value) {
+                    if (value != null) {
+                      onPlayerPreferencesChanged(
+                        playerPreferences.copyWith(seekBackwardSeconds: value),
+                      );
+                    }
+                  }
+                : null,
+          ),
+        ),
+        ListTile(
+          key: const Key('player-seek-forward-setting'),
+          leading: const Icon(Icons.forward_rounded),
+          title: Text(l10n.playerSeekForward),
+          trailing: DropdownButton<int>(
+            value: playerPreferences.seekForwardSeconds,
+            items: [
+              for (final seconds
+                  in PlayerPreferences.seekDurationOptionsSeconds)
+                DropdownMenuItem(
+                  value: seconds,
+                  child: Text(l10n.playerSeekSecondsValue(seconds)),
+                ),
+            ],
+            onChanged: arePlayerPreferencesLoaded
+                ? (value) {
+                    if (value != null) {
+                      onPlayerPreferencesChanged(
+                        playerPreferences.copyWith(seekForwardSeconds: value),
+                      );
+                    }
+                  }
+                : null,
+          ),
+        ),
+        ListTile(
           key: const Key('player-subtitle-language-setting'),
           title: Text(l10n.playerSubtitleLanguage),
           leading: const Icon(Icons.subtitles_outlined),
           trailing: DropdownButton<String>(
-            value: const {'', 'zh', 'en', 'ja'}.contains(
-              playerPreferences.subtitleLanguage,
-            )
+            value:
+                const {
+                  '',
+                  'zh',
+                  'en',
+                  'ja',
+                }.contains(playerPreferences.subtitleLanguage)
                 ? playerPreferences.subtitleLanguage
                 : '',
             items: [
