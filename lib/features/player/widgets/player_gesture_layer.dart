@@ -18,7 +18,6 @@ class PlayerGestureLayer extends StatefulWidget {
     this.seekDuration = const Duration(minutes: 10),
     this.onDoubleTapSeek,
     this.locked = false,
-    this.onPreviewChanged,
     this.onActivity,
     this.onInteractionChanged,
     this.text,
@@ -34,7 +33,6 @@ class PlayerGestureLayer extends StatefulWidget {
   final VoidCallback onDoubleTap;
   final Duration seekDuration;
   final ValueChanged<bool>? onDoubleTapSeek;
-  final ValueChanged<Duration?>? onPreviewChanged;
   final VoidCallback? onActivity;
   final ValueChanged<bool>? onInteractionChanged;
   final String Function(String key)? text;
@@ -169,7 +167,6 @@ class _PlayerGestureLayerState extends State<PlayerGestureLayer> {
         }
       }
       _indicator = '${_text('playerSeek', 'Seek')}: ${_format(candidate)}';
-      widget.onPreviewChanged?.call(candidate);
       setState(() {});
     } else if (_isVerticalAdjust) {
       final value = (_startValue - delta.dy / size.height * 100).clamp(
@@ -227,7 +224,6 @@ class _PlayerGestureLayerState extends State<PlayerGestureLayer> {
     _gestureGeneration++;
     widget.onInteractionChanged?.call(false);
     widget.onActivity?.call();
-    widget.onPreviewChanged?.call(null);
     _start = null;
     _startPosition = null;
     _preview = null;

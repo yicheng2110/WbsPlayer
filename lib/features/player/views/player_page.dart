@@ -18,6 +18,7 @@ import '../view_models/player_view_model.dart';
 import '../widgets/player_error_view.dart';
 import '../widgets/player_gesture_layer.dart';
 import '../widgets/player_osd_controls.dart';
+import '../widgets/player_status_bar.dart';
 import '../widgets/player_track_sheet.dart';
 
 /// Arguments required to open a video from the detail page.
@@ -85,7 +86,8 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
   );
   final _osdKey = GlobalKey<PlayerOsdControlsState>();
   final FocusNode _focusNode = FocusNode(debugLabel: 'PlayerPage');
-  bool _isSeeking = false;
+  Timer? _clockTimer;
+  DateTime _currentTime = DateTime.now();
   bool _controlsLocked = false;
   BoxFit _videoFit = BoxFit.contain;
   bool _showStats = false;
@@ -174,6 +176,13 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
     _appliedDecoderMode = _decoderMode;
     WidgetsBinding.instance.addObserver(this);
     _viewModel.addListener(_handlePlaybackState);
+    _clockTimer = Timer.periodic(const Duration(seconds: 15), (_) {
+      if (!mounted) return;
+      final now = DateTime.now();
+      if (now.minute != _currentTime.minute || now.hour != _currentTime.hour) {
+        setState(() => _currentTime = now);
+      }
+    });
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _viewModel.open();
@@ -194,6 +203,7 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _viewModel.removeListener(_handlePlaybackState);
+    _clockTimer?.cancel();
     _focusNode.dispose();
     unawaited(
       ScreenBrightness().resetApplicationScreenBrightness().catchError((_) {}),
@@ -385,15 +395,20 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
                           _viewModel.seek(_viewModel.state.position + offset),
                         );
                       },
-                      onPreviewChanged: (position) {
-                        if (mounted) {
-                          setState(() => _isSeeking = position != null);
-                        }
-                      },
                       onInteractionChanged: (active) =>
                           _osdKey.currentState?.setGestureActive(active),
                       onActivity: () => _osdKey.currentState?.showControls(),
                       text: (key) => _text(key, key),
+                    ),
+                    Positioned(
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      child: PlayerStatusBar(
+                        time: _currentTime,
+                        streamLoadBytesPerSecond:
+                            state.streamLoadBytesPerSecond,
+                      ),
                     ),
                     PlayerOsdControls(
                       key: _osdKey,
@@ -473,27 +488,6 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
                           ),
                         ),
                       ),
-                    if (_isSeeking)
-                      Positioned(
-                        top: 24,
-                        right: 24,
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            color: Colors.black87,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 8,
-                            ),
-                            child: Text(
-                              _formatDuration(state.position),
-                              style: const TextStyle(color: Colors.white),
-                            ),
-                          ),
-                        ),
-                      ),
                   ],
                 ),
               );
@@ -530,7 +524,7 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
                   '${_text('playerStatsAudio', 'Audio')}: ${state.audioCodec ?? '—'} ${_formatBitrate(state.audioBitrate)}',
                 ),
                 Text(
-                  '${_text('playerStatsNetworkSpeed', 'Stream load speed')}: ${_formatNetworkSpeed(state.streamLoadBytesPerSecond)}',
+                  '${_text('playerStatsNetworkSpeed', 'Stream load speed')}: ${PlayerStatusBar.formatStreamLoadSpeed(state.streamLoadBytesPerSecond)}',
                 ),
                 Text(
                   '${_text('playerStatsBuffer', 'Buffer')}: ${_formatDuration(state.buffered)}',
@@ -608,10 +602,6 @@ class _PlayerPageState extends State<PlayerPage> with WidgetsBindingObserver {
   String _formatBitrate(double? bitsPerSecond) => bitsPerSecond == null
       ? ''
       : '${(bitsPerSecond / 1000000).toStringAsFixed(1)} Mbps';
-
-  String _formatNetworkSpeed(double? bytesPerSecond) => bytesPerSecond == null
-      ? '—'
-      : '${(bytesPerSecond * 8 / 1000000).toStringAsFixed(1)} Mbps';
 
   String _playbackError(String error) {
     final code = RegExp(r'EmbyPlaybackException\(([^,)]+)')

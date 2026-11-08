@@ -203,7 +203,7 @@ class PlayerOsdControlsState extends State<PlayerOsdControls> {
                     children: [
                       if (!_locked) ...[
                         Positioned(
-                          top: edge,
+                          top: edge + 28,
                           left: inset - 8,
                           right: inset - 8,
                           child: _buildTopBar(
